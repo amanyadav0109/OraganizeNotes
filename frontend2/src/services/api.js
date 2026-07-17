@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
- baseURL: "https://organizedata.onrender.com/api"
+ baseURL: "https://oraganizenotes-1.onrender.com"
 });
 
 api.interceptors.request.use((config) => {
