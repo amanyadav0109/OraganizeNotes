@@ -1,11 +1,16 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
-import api from "../services/api";
 import { signInWithPopup } from "firebase/auth";
+
+import api from "../services/api";
+import { auth, googleProvider } from "../firebase/firebase";
+import { useAuth } from "../context/AuthContext";
 function Register() {
 
     const navigate = useNavigate();
+
+        const { login } = useAuth();
 
     const [showPassword, setShowPassword] = useState(false);
 
