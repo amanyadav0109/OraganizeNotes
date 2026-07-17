@@ -44,20 +44,24 @@ function Login() {
       setLoading(false);
     }
   };
- const result = await signInWithPopup(auth, googleProvider);
+ const handleGoogleLogin = async () => {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
 
-const idToken = await result.user.getIdToken();
+    const idToken = await result.user.getIdToken();
 
-const response = await axios.post(
-  "https://organizedata.onrender.com/api/auth/google",
-  {
-    idToken,
+    const response = await api.post("/auth/google", {
+      idToken,
+    });
+
+    login(response.data.token, response.data.user);
+
+    navigate("/dashboard", { replace: true });
+  } catch (err) {
+    console.log(err);
+    alert("Google Login Failed");
   }
-);
-
-localStorage.setItem("token", response.data.token);
-
-navigate("/dashboard");
+};
 
  return (
   <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 flex items-center justify-center px-4 py-10">
