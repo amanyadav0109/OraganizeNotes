@@ -23,7 +23,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "https://orgnize-notes.vercel.app",
+    origin: true,
     credentials: true,
   })
 );

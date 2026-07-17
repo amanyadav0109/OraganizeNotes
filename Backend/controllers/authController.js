@@ -6,7 +6,8 @@ import { adminAuth } from "../config/firebaseAdmin.js";
 // REGISTER
 
 export const register = async (req, res) => {
-
+      console.log("Login API called");
+    console.log(req.body);
     try {
 
         const { name, email, password } = req.body;
@@ -189,31 +190,35 @@ export const googleLogin = async (req, res) => {
         message: "ID Token Required",
       });
     }
-const decoded = await adminAuth.verifyIdToken(idToken);
+
+    const decodedToken = await adminAuth.verifyIdToken(idToken);
+
     const email = decodedToken.email;
     const name = decodedToken.name;
+
     db.query(
-      "SELECT * FROM users WHERE email=?",
+      "SELECT * FROM users WHERE email = ?",
       [email],
       (err, results) => {
         if (err) {
           return res.status(500).json({
             message: "Database Error",
           });
-       }
+        }
+
         if (results.length > 0) {
           const token = jwt.sign(
             { id: results[0].id },
             process.env.JWT_SECRET,
             { expiresIn: "7d" }
           );
+
           return res.json({
             token,
             user: results[0],
           });
         }
 
-      
         db.query(
           "INSERT INTO users(name,email) VALUES(?,?)",
           [name, email],

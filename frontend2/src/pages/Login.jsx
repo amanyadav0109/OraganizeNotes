@@ -34,17 +34,20 @@ function Login() {
       setLoading(true);
 
       const res = await api.post("/auth/login", formData);
-
+console.log(res.data);
       login(res.data.token,res.data.user);
 
       navigate("/dashboard", { replace: true });
     } catch (err) {
+        console.log(err);
+  console.log(err.response);
+  console.log(err.response?.data);
       alert(err.response?.data?.message || "Login Failed");
     } finally {
       setLoading(false);
     }
   };
- const handleGoogleLogin = async () => {
+const handleGoogleLogin = async () => {
   try {
     const result = await signInWithPopup(auth, googleProvider);
 
