@@ -26,6 +26,7 @@ app.use(
     origin: [
       "http://localhost:5173",
       "https://oraganize-notes.vercel.app",
+       "https://oraganize-notes-ivs7inag1-aman-yadavs-projects-02be5bb4.vercel.app"
     ],
     credentials: true,
   })
