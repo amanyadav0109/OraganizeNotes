@@ -7,7 +7,8 @@ import api from "../services/api";
 import { auth, googleProvider } from "../firebase/firebase";
 import { useAuth } from "../context/AuthContext";
 function Register() {
-
+  console.log("REGISTER PAGE LOADED");
+  console.log(auth);
     const navigate = useNavigate();
 
         const { login } = useAuth();
@@ -267,6 +268,7 @@ function Register() {
 
         <button
         onClick={handleGoogleLogin}
+        type="button"
           className="w-full border border-gray-300 py-3 rounded-xl hover:bg-gray-50 transition flex justify-center items-center gap-3"
         >
           <FaGoogle className="text-red-500" />
