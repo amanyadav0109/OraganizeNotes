@@ -189,14 +189,9 @@ export const googleLogin = async (req, res) => {
         message: "ID Token Required",
       });
     }
-
-    
-   
 const decoded = await adminAuth.verifyIdToken(idToken);
-
     const email = decodedToken.email;
     const name = decodedToken.name;
-
     db.query(
       "SELECT * FROM users WHERE email=?",
       [email],
@@ -205,16 +200,13 @@ const decoded = await adminAuth.verifyIdToken(idToken);
           return res.status(500).json({
             message: "Database Error",
           });
-        }
-
-    
+       }
         if (results.length > 0) {
           const token = jwt.sign(
             { id: results[0].id },
             process.env.JWT_SECRET,
             { expiresIn: "7d" }
           );
-
           return res.json({
             token,
             user: results[0],
