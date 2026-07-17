@@ -1,0 +1,56 @@
+@import "tailwindcss";
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------- Reusable Classes ---------- */
+
+@layer components {
+
+  .page {
+    @apply min-h-screen bg-slate-100 dark:bg-slate-900 transition-colors duration-300;
+  }
+
+  .navbar {
+    @apply bg-white dark:bg-slate-800 dark:text-white shadow transition-colors duration-300;
+  }
+
+  .sidebar {
+    @apply bg-white dark:bg-slate-800 dark:text-white border-r dark:border-slate-700 shadow-lg transition-colors duration-300;
+  }
+
+  .card {
+    @apply bg-white dark:bg-slate-800 dark:text-white rounded-xl shadow-md transition-colors duration-300;
+  }
+
+  .input {
+    @apply border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white rounded-lg px-3 py-2 outline-none;
+  }
+
+  .modal {
+    @apply bg-white dark:bg-slate-800 dark:text-white rounded-xl shadow-xl transition-colors duration-300;
+  }
+  .rdp {
+  --rdp-cell-size: 42px;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .rdp {
+    --rdp-cell-size: 34px;
+    font-size: 13px;
+  }
+}
+
+}
