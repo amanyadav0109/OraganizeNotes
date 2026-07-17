@@ -1,7 +1,7 @@
 import db from "../config/db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import admin from "../config/firebaseAdmin.js";
+import { adminAuth } from "../config/firebaseAdmin.js";
 
 // REGISTER
 
@@ -191,7 +191,8 @@ export const googleLogin = async (req, res) => {
     }
 
     
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
+   
+const decoded = await adminAuth.verifyIdToken(idToken);
 
     const email = decodedToken.email;
     const name = decodedToken.name;

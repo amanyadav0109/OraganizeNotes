@@ -1,8 +1,9 @@
-import admin from "firebase-admin";
-import serviceAccount from "./firebase-adminsdk.json" assert { type: "json" };
+import { initializeApp, cert } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
+import serviceAccount from "./firebase-adminsdk.json" with { type: "json" };
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+initializeApp({
+  credential: cert(serviceAccount),
 });
 
-export default admin;
+export const adminAuth = getAuth();
