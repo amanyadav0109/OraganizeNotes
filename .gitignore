@@ -1,0 +1,19 @@
+# Node modules
+node_modules/
+**/node_modules/
+
+# Environment files
+.env
+Backend/.env
+frontend2/.env
+Backend/config/firebase-adminsdk.json
+# Build folders
+dist/
+build/Remove-Item -Recurse -Force .git
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
