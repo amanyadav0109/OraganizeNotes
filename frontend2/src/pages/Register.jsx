@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
 import api from "../services/api";
-
+import { signInWithPopup } from "firebase/auth";
 function Register() {
 
     const navigate = useNavigate();
@@ -71,6 +71,24 @@ function Register() {
         }
 
     };
+    const handleGoogleLogin = async () => {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+
+    const idToken = await result.user.getIdToken();
+
+    const response = await api.post("/auth/google", {
+      idToken,
+    });
+
+    login(response.data.token, response.data.user);
+
+    navigate("/dashboard", { replace: true });
+  } catch (err) {
+    console.log(err);
+    alert("Google Login Failed");
+  }
+};
 
    return (
   <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 flex items-center justify-center px-4 py-10">
@@ -243,6 +261,7 @@ function Register() {
         </div>
 
         <button
+        onClick={handleGoogleLogin}
           className="w-full border border-gray-300 py-3 rounded-xl hover:bg-gray-50 transition flex justify-center items-center gap-3"
         >
           <FaGoogle className="text-red-500" />
