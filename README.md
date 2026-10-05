@@ -45,7 +45,7 @@ Deployment
   
 Live
 
-https://orgnize-notes.vercel.app
+https://oraganize-notes.vercel.app
 
 
 ## Installation
