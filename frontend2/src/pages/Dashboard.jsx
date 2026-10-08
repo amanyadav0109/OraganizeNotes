@@ -55,8 +55,6 @@ function Dashboard() {
         min-h-[calc(100vh-4rem)]
       "
       >
-       
-
         <div className="rounded-2xl lg:rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-5 sm:p-7 lg:p-10 shadow-xl">
           <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
             <div>
@@ -84,8 +82,6 @@ function Dashboard() {
           </div>
         </div>
 
-        
-
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 mt-8">
           {/* Subjects */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl p-4 sm:p-5 lg:p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition">
@@ -104,7 +100,6 @@ function Dashboard() {
             </p>
           </div>
 
-         
           <div className="bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl p-4 sm:p-5 lg:p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition">
             <div className="flex items-center justify-between">
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-100 dark:bg-green-900 flex items-center justify-center">
@@ -121,7 +116,6 @@ function Dashboard() {
             </p>
           </div>
 
-       
           <div className="bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl p-4 sm:p-5 lg:p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition">
             <div className="flex items-center justify-between">
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center">
@@ -138,7 +132,6 @@ function Dashboard() {
             </p>
           </div>
 
-         
           <div className="bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl p-4 sm:p-5 lg:p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition">
             <div className="flex items-center justify-between">
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-red-100 dark:bg-red-900 flex items-center justify-center">
@@ -156,32 +149,55 @@ function Dashboard() {
           </div>
         </div>
 
-     
+        {/* <section className="mt-8 w-full lg:w-1/2 lg:mt-10 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-5 dark:text-white">
+            📈 Notes Activity
+          </h2>
 
-       <section className="mt-8 w-full lg:w-1/2 lg:mt-10 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8">
-  <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-5 dark:text-white">
-    📈 Notes Activity
-  </h2>
+          <div className="overflow-x-auto">
+            <DashboardChart />
+          </div>
+        </section>
+        <section className="mt-8 w-full lg:w-1/2 lg:mt-10 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-5 dark:text-white">
+            📈 Find Your Notes
+          </h2>
 
-  <div className="overflow-x-auto">
-    <DashboardChart />
-  </div>
-</section>
+          <div className="overflow-x-auto">
+            
+          </div>
+        </section> */}
+        <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-start">
+          {/* Notes Activity */}
+          <section className="w-full lg:w-1/2 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-5 dark:text-white">
+              📈 Notes Activity
+            </h2>
 
-       
+            <div className="overflow-x-auto">
+              <DashboardChart />
+            </div>
+          </section>
+
+          {/* Find Notes */}
+          <section className="w-full lg:w-1/2 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-5 dark:text-white">
+              📚 Find Your Notes
+            </h2>
+
+            <div>{/* Marketplace will come here */}</div>
+          </section>
+        </div>
 
         <section className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8 mt-8 lg:mt-10">
-          
-
           <div className="xl:col-span-2 flex flex-col gap-6">
-           
             <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-lg p-6">
               <h2 className="text-2xl font-bold mb-5 dark:text-white">
                 📅 Calendar
               </h2>
               <ReminderCalendar />
             </div>
-            
+
             <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-lg p-6">
               <h2 className="text-2xl font-bold mb-5 dark:text-white">
                 ✅ Recently Completed
