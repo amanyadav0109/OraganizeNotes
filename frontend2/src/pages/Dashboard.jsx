@@ -14,7 +14,7 @@ import Sidebar from "../components/Sidebar";
 import ReminderCalendar from "../components/ReminderCalendar";
 import UpcomingReminders from "../components/UpcomingReminders";
 import DashboardChart from "../components/DashboardChart";
-
+import FindNotes from "../components/FindNotes";
 import { getDashboardStats } from "../services/dashboardService";
 
 function Dashboard() {
@@ -167,27 +167,34 @@ function Dashboard() {
             
           </div>
         </section> */}
-        <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-start">
-          {/* Notes Activity */}
-          <section className="w-full lg:w-1/2 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8">
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-5 dark:text-white">
-              📈 Notes Activity
-            </h2>
+      <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-start">
 
-            <div className="overflow-x-auto">
-              <DashboardChart />
-            </div>
-          </section>
+  {/* Notes Activity */}
+  <section className="w-full lg:w-1/2 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8">
 
-          {/* Find Notes */}
-          <section className="w-full lg:w-1/2 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8">
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-5 dark:text-white">
-              📚 Find Your Notes
-            </h2>
+    <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-5 dark:text-white">
+      📈 Notes Activity
+    </h2>
 
-            <div>{/* Marketplace will come here */}</div>
-          </section>
-        </div>
+    <div className="overflow-x-auto">
+      <DashboardChart />
+    </div>
+
+  </section>
+
+
+  {/* Notes Marketplace */}
+  <section className="w-full lg:w-1/2 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8">
+
+    <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-5 dark:text-white">
+      📚 Find Your Notes
+    </h2>
+
+    <FindNotes />
+
+  </section>
+
+</div>
 
         <section className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8 mt-8 lg:mt-10">
           <div className="xl:col-span-2 flex flex-col gap-6">
