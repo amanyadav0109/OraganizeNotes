@@ -54,3 +54,27 @@ body,
 }
 
 }
+/* Find Notes scrollbar */
+
+.notes-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notes-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.notes-scroll::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 10px;
+}
+
+.notes-scroll::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Firefox */
+.notes-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #475569 transparent;
+}

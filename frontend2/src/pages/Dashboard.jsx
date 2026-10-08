@@ -167,11 +167,14 @@ function Dashboard() {
             
           </div>
         </section> */}
-      <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-start">
+ <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-stretch">
 
-  {/* Notes Activity */}
-  <section className="w-full lg:w-1/2 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8">
-
+  {/* ================= NOTES ACTIVITY ================= */}
+  <section
+    className="w-full lg:w-1/2 bg-white dark:bg-slate-900
+    rounded-2xl lg:rounded-3xl shadow-lg
+    p-4 sm:p-6 lg:p-8"
+  >
     <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-5 dark:text-white">
       📈 Notes Activity
     </h2>
@@ -179,19 +182,21 @@ function Dashboard() {
     <div className="overflow-x-auto">
       <DashboardChart />
     </div>
-
   </section>
 
 
-  {/* Notes Marketplace */}
-  <section className="w-full lg:w-1/2 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8">
-
+  {/* ================= FIND YOUR NOTES ================= */}
+  <section
+    className="w-full lg:w-1/2 bg-white dark:bg-slate-900
+    rounded-2xl lg:rounded-3xl shadow-lg
+    p-4 sm:p-6 lg:p-8
+    flex flex-col"
+  >
     <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-5 dark:text-white">
       📚 Find Your Notes
     </h2>
 
     <FindNotes />
-
   </section>
 
 </div>
