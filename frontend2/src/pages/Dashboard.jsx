@@ -158,15 +158,15 @@ function Dashboard() {
 
      
 
-        <section className="mt-8 lg:mt-10 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-5 dark:text-white">
-            📈 Notes Activity
-          </h2>
+       <section className="mt-8 w-full lg:w-1/2 lg:mt-10 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8">
+  <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-5 dark:text-white">
+    📈 Notes Activity
+  </h2>
 
-          <div className="overflow-x-auto">
-            <DashboardChart />
-          </div>
-        </section>
+  <div className="overflow-x-auto">
+    <DashboardChart />
+  </div>
+</section>
 
        
 
@@ -174,7 +174,7 @@ function Dashboard() {
           
 
           <div className="xl:col-span-2 flex flex-col gap-6">
-            {/* Calendar */}
+           
             <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-lg p-6">
               <h2 className="text-2xl font-bold mb-5 dark:text-white">
                 📅 Calendar
