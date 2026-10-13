@@ -20,6 +20,7 @@ import SellNotes from "./pages/SellNotes";
 import MyUploadedNotes from "./pages/MyUploadedNotes";
 import EditMarketplaceNote from "./pages/EditMarketplaceNote";
 import ViewMarketplaceNote from "./pages/ViewMarketplaceNote";
+import AddNote from "./pages/AddNote";
 function App() {
   return (
     <Routes>
@@ -53,6 +54,10 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+    path="/subject/:id/add-note"
+    element={<AddNote />}
+/>
 
       <Route
         path="/subject/:id"

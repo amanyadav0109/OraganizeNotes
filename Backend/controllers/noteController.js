@@ -1,43 +1,105 @@
 import db from "../config/db.js";
 
-export const createNote = (req, res) => {
-   
 
-    const { title, content, dueDate, subjectId } = req.body;
+import { bucket } from "../config/firebaseAdmin.js";
+import crypto from "crypto";
 
-    if (!title || !content) {
-        return res.status(400).json({
-            message: "Title and Content are required"
-        });
-    }
+export const createNote = async (req, res) => {
+    try {
+        const {
+            title,
+            content,
+            dueDate,
+            subjectId
+        } = req.body;
 
-    const sql = `
-        INSERT INTO notes(title, content, userId, dueDate, subjectId)
-        VALUES (?, ?, ?, ?, ?)
-    `;
+        const pdfFile = req.file;
 
-    // Save exactly the time received from frontend
-    const mysqlDate = dueDate || null;
-
-    
-
-    db.query(
-        sql,
-        [title, content, req.userId, mysqlDate, subjectId],
-        (err, result) => {
-            if (err) {
-                console.log(err);
-                return res.status(500).json({
-                    message: "Database Error"
-                });
-            }
-
-            return res.status(201).json({
-                message: "Note Created Successfully",
-                noteId: result.insertId
+        // At least content OR PDF required
+        if (!title) {
+            return res.status(400).json({
+                message: "Title is required"
             });
         }
-    );
+
+        if (!content?.trim() && !pdfFile) {
+            return res.status(400).json({
+                message: "Please write content or attach a PDF"
+            });
+        }
+
+        let filePath = null;
+        let fileName = null;
+
+        // Upload PDF to Firebase Storage
+        if (pdfFile) {
+            fileName = pdfFile.originalname;
+
+            const storageFileName = `${crypto.randomUUID()}.pdf`;
+
+            filePath = `notes/${storageFileName}`;
+
+            const file = bucket.file(filePath);
+
+            await file.save(pdfFile.buffer, {
+                metadata: {
+                    contentType: "application/pdf"
+                }
+            });
+        }
+
+        const sql = `
+            INSERT INTO notes
+            (
+                title,
+                content,
+                userId,
+                dueDate,
+                subjectId,
+                filePath,
+                fileName
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        const mysqlDate = dueDate || null;
+
+        db.query(
+            sql,
+            [
+                title,
+                content?.trim() || null,
+                req.userId,
+                mysqlDate,
+                subjectId || null,
+                filePath,
+                fileName
+            ],
+            (err, result) => {
+                if (err) {
+                    console.error("CREATE NOTE DB ERROR:", err);
+
+                    return res.status(500).json({
+                        message: "Database Error"
+                    });
+                }
+
+                return res.status(201).json({
+                    message: "Note Created Successfully",
+                    noteId: result.insertId,
+                    filePath,
+                    fileName
+                });
+            }
+        );
+
+    } catch (error) {
+        console.error("CREATE NOTE ERROR:", error);
+
+        return res.status(500).json({
+            message: "Failed to create note"
+        });
+    }
 };
 export const getNotesBySubject = (req, res) => {
 

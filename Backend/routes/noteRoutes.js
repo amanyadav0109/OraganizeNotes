@@ -9,12 +9,12 @@ import {
     deleteNote,
     pinNote,searchNotes,completeTask
 } from "../controllers/noteController.js";
-
+import upload from "../middleware/uploadMiddleware.js";
 import { isAuth } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/create", isAuth, createNote);
+router.post("/create", isAuth, upload.single("pdf"), createNote);
 router.get("/all", isAuth, getMyNotes);
 router.get("/pinned", isAuth, getPinnedNotes);
 router.get("/subject/:subjectId", isAuth, getNotesBySubject);
