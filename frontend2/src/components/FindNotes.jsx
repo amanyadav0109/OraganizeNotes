@@ -1,328 +1,594 @@
-import React, { useState } from "react";
-
-const notesData = [
-  {
-    id: 1,
-    title: "DBMS Normalization Notes",
-    subject: "DBMS",
-    unit: "Unit 3",
-    description:
-      "Complete notes covering 1NF, 2NF, 3NF and BCNF with easy examples.",
-    price: 20,
-    seller: "Rahul",
-  },
-  {
-    id: 2,
-    title: "Operating System Process Management",
-    subject: "Operating System",
-    unit: "Unit 2",
-    description:
-      "Process scheduling, threads and process synchronization notes.",
-    price: 15,
-    seller: "Aman",
-  },
-  {
-    id: 3,
-    title: "Computer Networks TCP/IP",
-    subject: "Computer Networks",
-    unit: "Unit 4",
-    description:
-      "TCP/IP model, protocols and important network layer concepts.",
-    price: 25,
-    seller: "Priya",
-  },
-  {
-    id: 4,
-    title: "Java OOPs Complete Notes",
-    subject: "Java",
-    unit: "Unit 2",
-    description:
-      "Classes, objects, inheritance, polymorphism, abstraction and encapsulation.",
-    price: 30,
-    seller: "Rohit",
-  },
-];
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const FindNotes = () => {
-  const [search, setSearch] = useState("");
+    const navigate = useNavigate();
 
-  const filteredNotes = notesData.filter((note) =>
-    `${note.title} ${note.subject} ${note.unit} ${note.description}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+    const [notes, setNotes] = useState([]);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
-  return (
-    <div className="flex flex-col flex-1 min-h-0">
+    useEffect(() => {
+        const fetchNotes = async () => {
+            try {
+                setLoading(true);
+                setError("");
 
-      {/* ================= SEARCH ================= */}
-      <div className="mb-4 shrink-0">
+                const response = await fetch(
+                    "http://localhost:5000/api/marketplace"
+                );
 
-        <div className="relative">
+                const data = await response.json();
 
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-slate-400">
-            🔍
-          </span>
+                if (!response.ok) {
+                    throw new Error(
+                        data.message || "Failed to fetch notes"
+                    );
+                }
 
-          <input
-            type="text"
-            placeholder="Search subject, unit or topic..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="
-              w-full
-              rounded-xl
-              border border-slate-300
-              dark:border-slate-700
-              bg-slate-50
-              dark:bg-slate-800
-              px-11 py-3
-              text-sm
-              text-slate-800
-              dark:text-white
-              placeholder:text-slate-400
-              outline-none
-              transition
-              focus:border-blue-500
-              focus:ring-2
-              focus:ring-blue-500/20
-            "
-          />
+                setNotes(data.notes || []);
+            } catch (error) {
+                console.error("FETCH NOTES ERROR:", error);
+                setError("Unable to load notes. Please try again.");
+            } finally {
+                setLoading(false);
+            }
+        };
 
-        </div>
+        fetchNotes();
+    }, []);
 
-      </div>
+    const filteredNotes = notes.filter((note) => {
+        const search = searchTerm.toLowerCase().trim();
 
+        if (!search) return true;
 
-      {/* ================= NOTES SCROLL AREA ================= */}
-      <div
-        className="
-          notes-scroll
-          flex-1
-          min-h-0
-          max-h-[395px]
-          overflow-y-auto
-          pr-2
-          space-y-4
-        "
-      >
+        return (
+            note.title?.toLowerCase().includes(search) ||
+            note.subject?.toLowerCase().includes(search) ||
+            note.unit?.toLowerCase().includes(search) ||
+            note.description?.toLowerCase().includes(search) ||
+            note.seller_name?.toLowerCase().includes(search)
+        );
+    });
 
-        {filteredNotes.length > 0 ? (
+    // ==============================
+    // LOADING
+    // ==============================
 
-          filteredNotes.map((note) => (
-
-            <div
-              key={note.id}
-              className="
-                rounded-xl
-                border border-slate-200
-                dark:border-slate-700
-                bg-slate-50
-                dark:bg-slate-800
-                p-4
-                transition
-                hover:border-blue-400
-                dark:hover:border-blue-500
-                hover:shadow-md
-              "
+    if (loading) {
+        return (
+            <section
+                className="
+                    w-full
+                    min-h-[500px]
+                    rounded-3xl
+                    p-6
+                    sm:p-8
+                    bg-white
+                    dark:bg-[#111827]
+                    border
+                    border-slate-200
+                    dark:border-slate-700
+                    shadow-sm
+                    transition-colors
+                "
             >
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <div className="text-center">
+                        <div
+                            className="
+                                w-10
+                                h-10
+                                mx-auto
+                                mb-4
+                                rounded-full
+                                border-4
+                                border-cyan-500/30
+                                border-t-cyan-500
+                                animate-spin
+                            "
+                        />
 
-              {/* ================= TITLE ================= */}
-              <h3
-                className="
-                  text-base
-                  sm:text-lg
-                  font-bold
-                  text-slate-900
-                  dark:text-white
-                  leading-snug
-                "
-              >
-                {note.title}
-              </h3>
-
-
-              {/* ================= SUBJECT + UNIT ================= */}
-              <div className="flex flex-wrap gap-2 mt-3">
-
-                <span
-                  className="
-                    rounded-full
-                    bg-blue-100
-                    dark:bg-blue-900/40
-                    text-blue-700
-                    dark:text-blue-300
-                    px-3
-                    py-1
-                    text-xs
-                    font-medium
-                  "
-                >
-                  {note.subject}
-                </span>
-
-                <span
-                  className="
-                    rounded-full
-                    bg-purple-100
-                    dark:bg-purple-900/40
-                    text-purple-700
-                    dark:text-purple-300
-                    px-3
-                    py-1
-                    text-xs
-                    font-medium
-                  "
-                >
-                  {note.unit}
-                </span>
-
-              </div>
-
-
-              {/* ================= DESCRIPTION ================= */}
-              <p
-                className="
-                  mt-3
-                  text-sm
-                  leading-relaxed
-                  text-slate-600
-                  dark:text-slate-300
-                "
-              >
-                {note.description}
-              </p>
-
-
-              {/* ================= BOTTOM ================= */}
-              <div
-                className="
-                  mt-5
-                  flex
-                  items-end
-                  justify-between
-                  gap-3
-                "
-              >
-
-                {/* SELLER */}
-                <div>
-
-                  <p
-                    className="
-                      text-xs
-                      text-slate-500
-                      dark:text-slate-400
-                    "
-                  >
-                    Uploaded by
-                  </p>
-
-                  <p
-                    className="
-                      mt-1
-                      text-sm
-                      font-semibold
-                      text-slate-800
-                      dark:text-white
-                    "
-                  >
-                    👤 {note.seller}
-                  </p>
-
+                        <p className="text-slate-500 dark:text-slate-400">
+                            Loading notes...
+                        </p>
+                    </div>
                 </div>
+            </section>
+        );
+    }
 
+    // ==============================
+    // ERROR
+    // ==============================
 
-                {/* PRICE + BUTTON */}
-                <div className="text-right">
+    if (error) {
+        return (
+            <section
+                className="
+                    w-full
+                    min-h-[500px]
+                    rounded-3xl
+                    p-6
+                    sm:p-8
+                    bg-white
+                    dark:bg-[#111827]
+                    border
+                    border-slate-200
+                    dark:border-slate-700
+                    shadow-sm
+                "
+            >
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <div className="text-center">
+                        <p className="text-4xl mb-3">⚠️</p>
 
-                  <p className="text-lg font-bold text-green-600">
-                    ₹{note.price}
-                  </p>
-
-                  <button
-                    type="button"
-                    className="
-                      mt-1
-                      rounded-lg
-                      bg-blue-600
-                      px-4
-                      py-2
-                      text-sm
-                      font-semibold
-                      text-white
-                      shadow-sm
-                      transition
-                      hover:bg-blue-700
-                      hover:shadow-md
-                      active:scale-95
-                    "
-                  >
-                    Get Notes
-                  </button>
-
+                        <p className="text-red-500 dark:text-red-400">
+                            {error}
+                        </p>
+                    </div>
                 </div>
+            </section>
+        );
+    }
 
-              </div>
-
-            </div>
-
-          ))
-
-        ) : (
-
-          /* ================= NO RESULTS ================= */
-          <div
+    return (
+        <section
             className="
-              flex
-              min-h-[250px]
-              flex-col
-              items-center
-              justify-center
-              text-center
+                w-full
+                min-h-[500px]
+                h-full
+                rounded-3xl
+                p-6
+                sm:p-8
+                bg-white
+                dark:bg-[#111827]
+                border
+                border-slate-200
+                dark:border-slate-700
+                shadow-sm
+                transition-colors
+                flex
+                flex-col
             "
-          >
+        >
 
-            <div className="text-4xl mb-3">
-              📚
+            {/* =====================================
+                HEADER
+            ===================================== */}
+
+            <div className="flex items-center gap-3 mb-7">
+
+                <div
+                    className="
+                        w-10
+                        h-10
+                        rounded-xl
+                        bg-cyan-500/10
+                        dark:bg-cyan-400/10
+                        flex
+                        items-center
+                        justify-center
+                        text-xl
+                    "
+                >
+                    📚
+                </div>
+
+                <div>
+                    <h1
+                        className="
+                            text-2xl
+                            sm:text-3xl
+                            font-bold
+                            text-slate-900
+                            dark:text-white
+                        "
+                    >
+                        Find Your Notes
+                    </h1>
+
+                    <p
+                        className="
+                            text-sm
+                            text-slate-500
+                            dark:text-slate-400
+                            mt-1
+                        "
+                    >
+                        Discover useful notes from other students
+                    </p>
+                </div>
+
             </div>
 
-            <h3 className="font-semibold text-slate-700 dark:text-white">
-              No notes found
-            </h3>
 
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Try searching another subject or unit.
-            </p>
+            {/* =====================================
+                SEARCH
+            ===================================== */}
 
-          </div>
+            <div className="relative mb-5">
 
-        )}
+                <span
+                    className="
+                        absolute
+                        left-4
+                        top-1/2
+                        -translate-y-1/2
+                        text-lg
+                        text-slate-400
+                    "
+                >
+                    🔍
+                </span>
 
-      </div>
+                <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search notes, subjects or units..."
+                    className="
+                        w-full
+                        pl-12
+                        pr-4
+                        py-3.5
+                        rounded-xl
+                        bg-slate-100
+                        dark:bg-[#1e293b]
+                        border
+                        border-slate-200
+                        dark:border-slate-700
+                        text-slate-900
+                        dark:text-white
+                        placeholder-slate-400
+                        outline-none
+                        focus:border-cyan-500
+                        focus:ring-2
+                        focus:ring-cyan-500/10
+                        transition
+                    "
+                />
+
+            </div>
 
 
-      {/* ================= FOOTER ================= */}
-      <div
-        className="
-          mt-4
-          pt-3
-          border-t
-          border-slate-200
-          dark:border-slate-700
-          shrink-0
-        "
-      >
+            {/* =====================================
+                RESULT COUNT
+            ===================================== */}
 
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          💡 Find notes uploaded by other students and get the material you
-          need.
-        </p>
+            <div className="mb-5">
 
-      </div>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
 
-    </div>
-  );
+                    <span className="font-semibold text-cyan-500">
+                        {filteredNotes.length}
+                    </span>
+
+                    {" "}
+
+                    {filteredNotes.length === 1
+                        ? "note"
+                        : "notes"}{" "}
+                    available
+
+                </p>
+
+            </div>
+
+
+            {/* =====================================
+                NO RESULTS
+            ===================================== */}
+
+            {filteredNotes.length === 0 ? (
+
+                <div
+                    className="
+                        flex
+                        flex-1
+                        items-center
+                        justify-center
+                        min-h-[280px]
+                    "
+                >
+
+                    <div className="text-center">
+
+                        <div
+                            className="
+                                w-16
+                                h-16
+                                mx-auto
+                                mb-4
+                                rounded-2xl
+                                bg-slate-100
+                                dark:bg-slate-800
+                                flex
+                                items-center
+                                justify-center
+                                text-3xl
+                            "
+                        >
+                            📚
+                        </div>
+
+                        <h3
+                            className="
+                                text-lg
+                                font-semibold
+                                text-slate-800
+                                dark:text-slate-200
+                            "
+                        >
+                            No notes found
+                        </h3>
+
+                        <p
+                            className="
+                                text-sm
+                                text-slate-500
+                                dark:text-slate-400
+                                mt-1
+                            "
+                        >
+                            Try searching for another subject or unit.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            ) : (
+
+                /* =====================================
+                   NOTES
+                ===================================== */
+
+                <div
+                    className="
+                        notes-scroll
+                        flex-1
+                        overflow-y-auto
+                        space-y-4
+                        pr-2
+                    "
+                >
+
+                    {filteredNotes.map((note) => (
+
+                        <article
+                            key={note.id}
+                            className="
+                                group
+                                rounded-2xl
+                                border
+                                border-slate-200
+                                dark:border-slate-700
+                                bg-slate-50
+                                dark:bg-[#1e293b]
+                                p-5
+                                sm:p-6
+                                transition-all
+                                duration-200
+                                hover:border-cyan-400
+                                dark:hover:border-cyan-500/60
+                                hover:shadow-md
+                            "
+                        >
+
+                            {/* TITLE */}
+
+                            <div className="mb-3">
+
+                                <h2
+                                    className="
+                                        text-lg
+                                        sm:text-xl
+                                        font-bold
+                                        text-slate-900
+                                        dark:text-white
+                                        leading-tight
+                                    "
+                                >
+                                    {note.title}
+                                </h2>
+
+                            </div>
+
+
+                            {/* BADGES */}
+
+                            <div className="flex flex-wrap gap-2 mb-4">
+
+                                <span
+                                    className="
+                                        px-3
+                                        py-1
+                                        rounded-full
+                                        text-xs
+                                        font-medium
+                                        bg-cyan-500/10
+                                        text-cyan-600
+                                        dark:text-cyan-400
+                                    "
+                                >
+                                    {note.subject}
+                                </span>
+
+                                <span
+                                    className="
+                                        px-3
+                                        py-1
+                                        rounded-full
+                                        text-xs
+                                        font-medium
+                                        bg-purple-500/10
+                                        text-purple-600
+                                        dark:text-purple-400
+                                    "
+                                >
+                                    {note.unit}
+                                </span>
+
+                            </div>
+
+
+                            {/* DESCRIPTION */}
+
+                            <p
+                                className="
+                                    text-sm
+                                    text-slate-600
+                                    dark:text-slate-400
+                                    leading-6
+                                    mb-4
+                                "
+                            >
+                                {note.description}
+                            </p>
+
+
+                            {/* SELLER */}
+
+                            <div
+                                className="
+                                    flex
+                                    items-center
+                                    gap-2
+                                    text-sm
+                                    text-slate-500
+                                    dark:text-slate-400
+                                    mb-5
+                                "
+                            >
+
+                                <span>👤</span>
+
+                                <span>
+                                    Seller:
+                                </span>
+
+                                <span
+                                    className="
+                                        font-medium
+                                        text-slate-700
+                                        dark:text-slate-300
+                                    "
+                                >
+                                    {note.seller_name}
+                                </span>
+
+                            </div>
+
+
+                            {/* BOTTOM */}
+
+                            <div
+                                className="
+                                    flex
+                                    flex-col
+                                    sm:flex-row
+                                    sm:items-center
+                                    sm:justify-between
+                                    gap-4
+                                "
+                            >
+
+                                {/* PRICE */}
+
+                                <div>
+
+                                    <p
+                                        className="
+                                            text-2xl
+                                            font-bold
+                                            text-slate-900
+                                            dark:text-white
+                                        "
+                                    >
+                                        ₹{Number(note.price).toFixed(2)}
+                                    </p>
+
+                                    <p
+                                        className="
+                                            text-xs
+                                            text-slate-400
+                                            mt-1
+                                        "
+                                    >
+                                        One-time purchase
+                                    </p>
+
+                                </div>
+
+
+                                {/* GET NOTES */}
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        navigate(
+                                            `/get-notes/${note.id}`
+                                        )
+                                    }
+                                    className="
+                                        w-full
+                                        sm:w-auto
+                                        px-6
+                                        py-3
+                                        rounded-xl
+                                        bg-cyan-500
+                                        hover:bg-cyan-400
+                                        text-black
+                                        font-semibold
+                                        transition-all
+                                        duration-200
+                                        hover:shadow-lg
+                                        hover:shadow-cyan-500/20
+                                        active:scale-95
+                                    "
+                                >
+                                    Get Notes
+                                </button>
+
+                            </div>
+
+                        </article>
+
+                    ))}
+
+                </div>
+
+            )}
+             <button
+    type="button"
+    onClick={() => navigate("/find-notes")}
+    className="
+      w-full
+      sm:w-auto
+      mt-5
+      px-5
+      py-3
+      rounded-xl
+      border
+      border-blue-500
+      text-blue-500
+      dark:text-blue-400
+      hover:bg-blue-500
+      hover:text-white
+      font-semibold
+      transition-all
+      duration-200
+      active:scale-95
+    "
+  >
+    View More 
+  </button>
+
+        </section>
+    );
 };
 
 export default FindNotes;

@@ -1,11 +1,11 @@
 
 import { useState } from "react";
+
 import {
   FaBook,
   FaStickyNote,
   FaStar,
-  
-  FaTimes,
+
 } from "react-icons/fa";
 
 import { NavLink, useNavigate } from "react-router-dom";
@@ -102,7 +102,30 @@ function Sidebar() {
             <FaStar />
             Pinned Notes
           </NavLink>
-
+          <NavLink
+            to="/find-notes"
+            className={menuClass}
+            onClick={() => setOpen(false)}
+          >
+           <FaBook />
+            Find Your Notes
+          </NavLink>
+             <NavLink
+            to="/sell-notes"
+            className={menuClass}
+            onClick={() => setOpen(false)}
+          >
+           <FaBook />
+            Sell Your Notes
+          </NavLink>
+          <NavLink
+            to="/my-uploaded-notes"
+            className={menuClass}
+            onClick={() => setOpen(false)}
+          >
+           <FaBook />
+            My Upload Notes
+          </NavLink>
         </nav>
 
       </aside>

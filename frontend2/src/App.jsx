@@ -7,7 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import SubjectNotes from "./pages/SubjectNotes";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Pinned from "./pages/Pinned";
-
+import GetNotes from "./pages/GetNotes";
 import Search from "./pages/Search";
 import EditName from "./pages/EditName";
 import Profile from "./pages/Profile";
@@ -15,6 +15,9 @@ import PublicProfile from "./pages/PublicProfile";
 import NoteDetails from "./pages/NoteDetails.jsx";
 import Subject from "./pages/Subject";
 import NotFound from "./pages/NotFound";
+import FindNotes from "./pages/FindNotes";
+import SellNotes from "./pages/SellNotes";
+import MyUploadedNotes from "./pages/MyUploadedNotes";
 function App() {
   return (
     <Routes>
@@ -66,6 +69,10 @@ function App() {
         }
       />
       <Route
+    path="/my-uploaded-notes"
+    element={<MyUploadedNotes />}
+/>
+      <Route
         path="/profile"
         element={
           <ProtectedRoute>
@@ -91,6 +98,12 @@ function App() {
         }
       />
        <Route path="*" element={<NotFound />} />
+       <Route path="/find-notes" element={<FindNotes />} />
+       <Route path="/get-notes/:id" element={<GetNotes />} />
+       <Route
+    path="/sell-notes"
+    element={<SellNotes />}
+/>
     </Routes>
   );
 }

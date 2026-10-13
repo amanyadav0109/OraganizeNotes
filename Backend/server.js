@@ -4,9 +4,9 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-
+import marketplaceDownloadRoutes from "./routes/marketplaceDownloadRoutes.js";
 import "./config/db.js";
-
+import marketplacePaymentRoutes from "./routes/marketplacePaymentRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import noteRoutes from "./routes/noteRoutes.js";
 import subjectRoutes from "./routes/subjectRoutes.js";
@@ -14,7 +14,7 @@ import dashboardRoutes from "./routes/dashboardRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import reminderRoutes from "./routes/reminderRoutes.js";
-
+import marketplaceRoutes from "./routes/marketplaceRoutes.js";
 import "./jobs/reminderJob.js";
 import cron from "node-cron";
 import { checkReminders } from "./services/reminderService.js";
@@ -42,7 +42,15 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/reminders", reminderRoutes);
-
+app.use("/api/marketplace", marketplaceRoutes);
+app.use(
+  "/api/marketplace/download",
+  marketplaceDownloadRoutes
+);
+app.use(
+  "/api/marketplace/payment",
+  marketplacePaymentRoutes
+);
 app.get("/", (req, res) => {
   res.send("FocusNotes Backend Running");
 });
