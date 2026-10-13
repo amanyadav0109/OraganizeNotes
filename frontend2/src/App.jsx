@@ -18,6 +18,8 @@ import NotFound from "./pages/NotFound";
 import FindNotes from "./pages/FindNotes";
 import SellNotes from "./pages/SellNotes";
 import MyUploadedNotes from "./pages/MyUploadedNotes";
+import EditMarketplaceNote from "./pages/EditMarketplaceNote";
+import ViewMarketplaceNote from "./pages/ViewMarketplaceNote";
 function App() {
   return (
     <Routes>
@@ -68,6 +70,14 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+    path="/view-marketplace-note/:id"
+    element={<ViewMarketplaceNote />}
+/>
+      <Route
+    path="/edit-marketplace-note/:id"
+    element={<EditMarketplaceNote />}
+/>
       <Route
     path="/my-uploaded-notes"
     element={<MyUploadedNotes />}

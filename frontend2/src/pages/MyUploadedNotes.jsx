@@ -166,13 +166,12 @@ const MyUploadedNotes = () => {
     md:ml-[215px]
     lg:ml-[220px]
 
-    pt-[90px]
-
-    px-4
-    sm:px-6
-    lg:px-8
-
-    pb-10
+    lg:ml-56
+          p-4
+          sm:p-6
+          lg:p-8
+          pb-24
+          min-h-[calc(100vh-4rem)]
 
     min-h-screen
 
@@ -843,347 +842,374 @@ const MyUploadedNotes = () => {
                         ">
 
 
-                            {notes.map((note) => (
+                           {notes.map((note) => (
+    <div
+        key={note.id}
+        onClick={() =>
+            navigate(`/view-marketplace-note/${note.id}`)
+        }
+        className="
+            group
+            bg-white
+            dark:bg-[#111c32]
 
-                                <div
-                                    key={note.id}
-                                    className="
-                                        group
+            border
+            border-gray-200
+            dark:border-[#263653]
 
-                                        bg-white
-                                        dark:bg-[#111c32]
+            rounded-2xl
 
-                                        border
-                                        border-gray-200
-                                        dark:border-[#263653]
+            p-5
 
-                                        rounded-2xl
+            shadow-sm
+            dark:shadow-none
 
-                                        p-5
+            hover:border-cyan-300
+            dark:hover:border-cyan-500/40
 
-                                        shadow-sm
-                                        dark:shadow-none
+            hover:bg-gray-50
+            dark:hover:bg-[#142238]
 
-                                        hover:border-cyan-300
-                                        dark:hover:border-cyan-500/40
+            transition-all
+            duration-200
 
-                                        transition-all
-                                        duration-200
-                                    "
-                                >
+            cursor-pointer
+        "
+    >
 
+        {/* CARD TOP */}
 
-                                    {/* CARD TOP */}
+        <div
+            className="
+                flex
+                items-start
+                justify-between
+                gap-3
+            "
+        >
 
-                                    <div className="
-                                        flex
-                                        items-start
-                                        justify-between
+            {/* PDF + TITLE */}
 
-                                        gap-3
-                                    ">
+            <div
+                className="
+                    flex
+                    items-start
+                    gap-3
+                    min-w-0
+                "
+            >
 
+                <div
+                    className="
+                        shrink-0
 
-                                        {/* PDF + TITLE */}
+                        w-12
+                        h-12
 
-                                        <div className="
-                                            flex
-                                            items-start
-                                            gap-3
+                        rounded-xl
 
-                                            min-w-0
-                                        ">
+                        bg-red-100
+                        dark:bg-red-500/10
 
-                                            <div className="
-                                                shrink-0
+                        flex
+                        items-center
+                        justify-center
+                    "
+                >
 
-                                                w-12
-                                                h-12
+                    <FaFilePdf
+                        className="
+                            text-red-500
+                            dark:text-red-400
+                            text-xl
+                        "
+                    />
 
-                                                rounded-xl
+                </div>
 
-                                                bg-red-100
-                                                dark:bg-red-500/10
 
-                                                flex
-                                                items-center
-                                                justify-center
-                                            ">
+                <div className="min-w-0">
 
-                                                <FaFilePdf
-                                                    className="
-                                                        text-red-500
-                                                        dark:text-red-400
+                    <h3
+                        className="
+                            font-semibold
 
-                                                        text-xl
-                                                    "
-                                                />
+                            text-gray-900
+                            dark:text-white
 
-                                            </div>
+                            truncate
+                        "
+                    >
+                        {note.title}
+                    </h3>
 
 
-                                            <div className="min-w-0">
+                    <p
+                        className="
+                            text-xs
 
-                                                <h3 className="
-                                                    font-semibold
+                            text-gray-500
+                            dark:text-gray-400
 
-                                                    text-gray-900
-                                                    dark:text-white
+                            mt-1
 
-                                                    truncate
-                                                ">
-                                                    {note.title}
-                                                </h3>
+                            truncate
+                        "
+                    >
+                        {note.file_name}
+                    </p>
 
+                </div>
 
-                                                <p className="
-                                                    text-xs
+            </div>
 
-                                                    text-gray-500
-                                                    dark:text-gray-400
 
-                                                    mt-1
+            {/* PRICE */}
 
-                                                    truncate
-                                                ">
-                                                    {note.file_name}
-                                                </p>
+            <span
+                className="
+                    shrink-0
 
-                                            </div>
+                    font-bold
 
-                                        </div>
+                    text-cyan-600
+                    dark:text-cyan-400
+                "
+            >
+                ₹
+                {Number(
+                    note.price || 0
+                ).toFixed(2)}
+            </span>
 
+        </div>
 
-                                        {/* PRICE */}
 
-                                        <span className="
-                                            shrink-0
+        {/* TAGS */}
 
-                                            font-bold
+        <div
+            className="
+                flex
+                flex-wrap
 
-                                            text-cyan-600
-                                            dark:text-cyan-400
-                                        ">
-                                            ₹{Number(
-                                                note.price || 0
-                                            ).toFixed(2)}
-                                        </span>
+                gap-2
 
-                                    </div>
+                mt-5
+            "
+        >
 
+            <span
+                className="
+                    px-3
+                    py-1
 
-                                    {/* TAGS */}
+                    rounded-full
 
-                                    <div className="
-                                        flex
-                                        flex-wrap
+                    text-xs
+                    font-medium
 
-                                        gap-2
+                    bg-cyan-100
+                    dark:bg-cyan-500/10
 
-                                        mt-5
-                                    ">
+                    text-cyan-700
+                    dark:text-cyan-400
+                "
+            >
+                {note.subject}
+            </span>
 
-                                        <span className="
-                                            px-3
-                                            py-1
 
-                                            rounded-full
+            <span
+                className="
+                    px-3
+                    py-1
 
-                                            text-xs
-                                            font-medium
+                    rounded-full
 
-                                            bg-cyan-100
-                                            dark:bg-cyan-500/10
+                    text-xs
+                    font-medium
 
-                                            text-cyan-700
-                                            dark:text-cyan-400
-                                        ">
-                                            {note.subject}
-                                        </span>
+                    bg-purple-100
+                    dark:bg-purple-500/10
 
+                    text-purple-700
+                    dark:text-purple-400
+                "
+            >
+                {note.unit}
+            </span>
 
-                                        <span className="
-                                            px-3
-                                            py-1
+        </div>
 
-                                            rounded-full
 
-                                            text-xs
-                                            font-medium
+        {/* DESCRIPTION */}
 
-                                            bg-purple-100
-                                            dark:bg-purple-500/10
+        <p
+            className="
+                text-sm
 
-                                            text-purple-700
-                                            dark:text-purple-400
-                                        ">
-                                            {note.unit}
-                                        </span>
+                text-gray-600
+                dark:text-gray-400
 
-                                    </div>
+                mt-4
 
+                min-h-[40px]
 
-                                    {/* DESCRIPTION */}
+                line-clamp-2
+            "
+        >
+            {note.description ||
+                "No description provided."}
+        </p>
 
-                                    <p className="
-                                        text-sm
 
-                                        text-gray-600
-                                        dark:text-gray-400
+        {/* DIVIDER */}
 
-                                        mt-4
+        <div
+            className="
+                border-t
 
-                                        min-h-[40px]
+                border-gray-200
+                dark:border-[#293955]
 
-                                        line-clamp-2
-                                    ">
-                                        {note.description ||
-                                            "No description provided."}
-                                    </p>
+                mt-5
+                pt-4
+            "
+        >
 
+            <div
+                className="
+                    flex
+                    flex-col
+                    sm:flex-row
 
-                                    {/* DIVIDER */}
+                    sm:items-center
+                    sm:justify-between
 
-                                    <div className="
-                                        border-t
+                    gap-3
+                "
+            >
 
-                                        border-gray-200
-                                        dark:border-[#293955]
+                {/* DATE */}
 
-                                        mt-5
-                                        pt-4
-                                    ">
+                <span
+                    className="
+                        text-xs
 
+                        text-gray-500
+                        dark:text-gray-400
+                    "
+                >
+                    Uploaded{" "}
+                    {new Date(
+                        note.created_at
+                    ).toLocaleDateString()}
+                </span>
 
-                                        <div className="
-                                            flex
-                                            flex-col
-                                            sm:flex-row
 
-                                            sm:items-center
-                                            sm:justify-between
+                {/* ACTIONS */}
 
-                                            gap-3
-                                        ">
+                <div
+                    className="
+                        flex
+                        items-center
+                        gap-2
+                    "
+                >
 
+                    {/* EDIT */}
 
-                                            {/* DATE */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
 
-                                            <span className="
-                                                text-xs
+                            navigate(
+                                `/edit-marketplace-note/${note.id}`
+                            );
+                        }}
+                        className="
+                            flex
+                            items-center
+                            justify-center
+                            gap-1.5
 
-                                                text-gray-500
-                                                dark:text-gray-400
-                                            ">
-                                                Uploaded{" "}
-                                                {new Date(
-                                                    note.created_at
-                                                ).toLocaleDateString()}
-                                            </span>
+                            px-3
+                            py-2
 
+                            rounded-lg
 
-                                            {/* ACTIONS */}
+                            bg-gray-100
+                            dark:bg-[#1b2940]
 
-                                            <div className="
-                                                flex
-                                                items-center
+                            text-gray-700
+                            dark:text-gray-300
 
-                                                gap-2
-                                            ">
+                            hover:bg-gray-200
+                            dark:hover:bg-[#263653]
 
+                            text-xs
+                            font-medium
 
-                                                {/* EDIT */}
+                            transition-colors
+                        "
+                    >
 
-                                                <button
-                                                    onClick={() =>
-                                                        navigate(
-                                                            `/edit-marketplace-note/${note.id}`
-                                                        )
-                                                    }
-                                                    className="
-                                                        flex
-                                                        items-center
-                                                        justify-center
-                                                        gap-1.5
+                        <FaEdit />
 
-                                                        px-3
-                                                        py-2
+                        Edit
 
-                                                        rounded-lg
+                    </button>
 
-                                                        bg-gray-100
-                                                        dark:bg-[#1b2940]
 
-                                                        text-gray-700
-                                                        dark:text-gray-300
+                    {/* DELETE */}
 
-                                                        hover:bg-gray-200
-                                                        dark:hover:bg-[#263653]
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
 
-                                                        text-xs
-                                                        font-medium
+                            handleDelete(note.id);
+                        }}
+                        className="
+                            flex
+                            items-center
+                            justify-center
+                            gap-1.5
 
-                                                        transition-colors
-                                                    "
-                                                >
+                            px-3
+                            py-2
 
-                                                    <FaEdit />
+                            rounded-lg
 
-                                                    Edit
+                            bg-red-50
+                            dark:bg-red-500/10
 
-                                                </button>
+                            text-red-600
+                            dark:text-red-400
 
+                            hover:bg-red-100
+                            dark:hover:bg-red-500/20
 
-                                                {/* DELETE */}
+                            text-xs
+                            font-medium
 
-                                                <button
-                                                    onClick={() =>
-                                                        handleDelete(
-                                                            note.id
-                                                        )
-                                                    }
-                                                    className="
-                                                        flex
-                                                        items-center
-                                                        justify-center
-                                                        gap-1.5
+                            transition-colors
+                        "
+                    >
 
-                                                        px-3
-                                                        py-2
+                        <FaTrash />
 
-                                                        rounded-lg
+                        Delete
 
-                                                        bg-red-50
-                                                        dark:bg-red-500/10
+                    </button>
 
-                                                        text-red-600
-                                                        dark:text-red-400
+                </div>
 
-                                                        hover:bg-red-100
-                                                        dark:hover:bg-red-500/20
+            </div>
 
-                                                        text-xs
-                                                        font-medium
+        </div>
 
-                                                        transition-colors
-                                                    "
-                                                >
-
-                                                    <FaTrash />
-
-                                                    Delete
-
-                                                </button>
-
-                                            </div>
-
-                                        </div>
-
-                                    </div>
-
-                                </div>
-
-                            ))}
+    </div>
+))}
 
                         </div>
 
