@@ -7,7 +7,7 @@ import {
     getSingleNote,
     updateNote,
     deleteNote,
-    pinNote,searchNotes,completeTask
+    pinNote,searchNotes,completeTask,getNotePdf
 } from "../controllers/noteController.js";
 import upload from "../middleware/uploadMiddleware.js";
 import { isAuth } from "../middleware/authMiddleware.js";
@@ -21,8 +21,13 @@ router.get("/subject/:subjectId", isAuth, getNotesBySubject);
 router.get("/search", isAuth, searchNotes);
 router.get("/:id", isAuth, getSingleNote);
 
-router.put("/update/:id", isAuth, updateNote);
-
+router.put(
+    "/:id",
+    isAuth,
+    upload.single("pdf"),
+    updateNote
+);
+router.get("/pdf/:id", isAuth, getNotePdf);
 router.delete("/delete/:id", isAuth, deleteNote);
 router.put("/pin/:id", isAuth, pinNote);
 router.put("/complete/:id", isAuth, completeTask);

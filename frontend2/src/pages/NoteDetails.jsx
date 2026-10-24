@@ -10,6 +10,7 @@ import { exportNotePDF } from "../utils/pdfExport";
 import { getSingleNote, deleteNote } from "../services/noteService";
 import { Share2 } from "lucide-react";
 import BottomNav from "../components/BottomNav";
+import axios from "axios";
 import {
   FaEdit,
   FaTrash,
@@ -21,7 +22,7 @@ function NoteDetails() {
   const { id } = useParams();
 
   const navigate = useNavigate();
-
+const [pdfUrl, setPdfUrl] = useState(null);
   const [note, setNote] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
@@ -30,13 +31,32 @@ function NoteDetails() {
   const [selectedContent, setSelectedContent] = useState("");
   const loadNote = async () => {
     try {
-      const data = await getSingleNote(id);
+        const data = await getSingleNote(id);
 
-      setNote(data);
+        setNote(data);
+
+        if (data.filePath) {
+            const token = localStorage.getItem("token");
+
+            const response = await axios.get(
+                `http://localhost:5000/api/notes/pdf/${id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    },
+                    responseType: "blob"
+                }
+            );
+
+            const url = URL.createObjectURL(response.data);
+
+            setPdfUrl(url);
+        }
+
     } catch (err) {
-      console.log(err);
+        console.log(err);
     }
-  };
+};
  const handleShare = async () => {
   if (!note) {
     alert("Note is still loading.");
@@ -147,7 +167,7 @@ function NoteDetails() {
 
             {/* Right */}
 
-            <div className="flex flex-col gap-3 w-full xl:w-auto">
+            <div className="flex flex-row gap-3 w-full xl:w-auto">
 
               <span className="px-4 py-3 rounded-xl bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold text-sm sm:text-base text-center">
 
@@ -191,27 +211,64 @@ function NoteDetails() {
 
           </h2>
 
-          <div className="bg-gray-50 dark:bg-slate-900 rounded-2xl p-4 sm:p-6 lg:p-8 text-gray-700 dark:text-gray-200 whitespace-pre-line leading-8 sm:leading-9 text-sm sm:text-base lg:text-lg break-words">
+        <div className="bg-gray-50 dark:bg-slate-900 rounded-2xl p-4 sm:p-6 lg:p-8 text-gray-700 dark:text-gray-200">
 
+    {note.content && (
+        <p className="whitespace-pre-line leading-8 sm:leading-9 text-sm sm:text-base lg:text-lg break-words">
             {note.content}
+        </p>
+    )}
 
-          </div>
+    {pdfUrl && (
+        <div className={`${note.content ? "mt-6 pt-6 border-t border-gray-200 dark:border-slate-700" : ""}`}>
 
-          {/* Action Buttons */}
+            <div className="flex items-center justify-between mb-4">
 
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
+                    📄 Attached PDF
+                </h3>
+
+                <a
+                    href={pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                    Open PDF
+                </a>
+
+            </div>
+
+            <div className="w-full overflow-hidden rounded-xl border border-gray-200 dark:border-slate-700 bg-white">
+                <iframe
+                    src={pdfUrl}
+                    title="Attached PDF"
+                    className="w-full h-[500px] sm:h-[650px] lg:h-[750px]"
+                />
+            </div>
+
+        </div>
+    )}
+
+    {!note.content && !pdfUrl && (
+        <p className="text-gray-500 dark:text-gray-400">
+            No content available.
+        </p>
+    )}
+
+</div>
           <div className="mt-10 flex justify-center sm:justify-end">
-
             <div className="grid grid-cols-3 sm:flex gap-3 sm:gap-4">
 
               {/* Edit */}
 
-              <button
-                onClick={() => setShowModal(true)}
-                title="Edit Note"
-                className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-lg transition"
-              >
-                <FaEdit size={20} />
-              </button>
+             <button
+    onClick={() => navigate(`/note/${note.id}/edit`)}
+    title="Edit Note"
+    className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-lg transition"
+>
+    <FaEdit size={20} />
+</button>
 
               {/* Delete */}
 

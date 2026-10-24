@@ -47,7 +47,7 @@ function Subjects() {
 
 
  return (
-  <div className="page">
+  <div className="page  bg-gray-50 dark:bg-slate-950">
  <Navbar />
 
     
@@ -81,25 +81,25 @@ function Subjects() {
   <div
     className="
       bg-white
-      dark:bg-slate-900
-      border
-      border-gray-200
-      dark:border-slate-800
-      rounded-2xl
-      px-4
-      sm:px-6
-      lg:px-8
-      py-4
-      sm:py-5
-      flex
-      flex-col
-      sm:flex-row
-      sm:items-center
-      sm:justify-between
-      gap-4
-      shadow-sm
-      dark:shadow-none
-      transition-colors
+            dark:bg-slate-900
+            border
+            border-gray-200
+            dark:border-slate-800
+            rounded-2xl
+            px-4
+            sm:px-6
+            lg:px-8
+            py-4
+            sm:py-5
+            flex
+            flex-col
+            sm:flex-row
+            sm:items-center
+            sm:justify-between
+            gap-4
+            shadow-sm
+            dark:shadow-none
+            transition-colors
     "
   >
 

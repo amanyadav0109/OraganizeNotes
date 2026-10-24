@@ -77,16 +77,106 @@ function FindNotes() {
         {/* =================================
             PAGE HEADER
         ================================= */}
+<div
+    className="
+        mb-6
+        lg:mb-8
 
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-            📚 Find Your Notes
-          </h1>
+        bg-white
+        dark:bg-slate-900
 
-          <p className="text-gray-500 dark:text-gray-400 mt-2">
-            Discover and purchase useful notes from other students.
-          </p>
+        border
+        border-gray-200
+        dark:border-slate-800
+
+        rounded-2xl
+
+        px-4
+        sm:px-6
+        lg:px-8
+
+        py-4
+        sm:py-5
+
+        flex
+        flex-col
+        sm:flex-row
+        sm:items-center
+        sm:justify-between
+
+        gap-4
+
+        shadow-sm
+        dark:shadow-none
+
+        transition-colors
+    "
+>
+    <div className="flex items-center gap-3 min-w-0">
+
+        <div
+            className="
+                w-11
+                h-11
+                sm:w-12
+                sm:h-12
+
+                shrink-0
+
+                flex
+                items-center
+                justify-center
+
+                rounded-xl
+
+                bg-blue-50
+                dark:bg-blue-500/10
+
+                border
+                border-blue-100
+                dark:border-blue-500/20
+
+                text-xl
+                sm:text-2xl
+            "
+        >
+            📝
         </div>
+
+        <div className="min-w-0">
+
+            <h1
+                className="
+                    text-xl
+                    sm:text-2xl
+                    md:text-3xl
+
+                    font-bold
+
+                    text-gray-900
+                    dark:text-white
+                "
+            >
+               📚 Find Your Notes
+            </h1>
+
+            <p
+                className="
+                    mt-1
+
+                    text-xs
+                    sm:text-sm
+
+                    text-gray-500
+                    dark:text-gray-400
+                "
+            >
+                Discover and purchase useful notes from other students.
+            </p>
+
+        </div>
+    </div>
+</div>
 
         {/* =================================
             MAIN CARD

@@ -140,13 +140,7 @@ const MyUploadedNotes = () => {
     return (
 
         <div className="
-            min-h-screen
-            bg-gray-50
-            dark:bg-[#020617]
-            text-gray-900
-            dark:text-white
-            transition-colors
-            duration-200
+            page min-h-screen bg-gray-50 dark:bg-[#080d18] transition-colors duration-200
         ">
 
             {/* ================= NAVBAR ================= */}
@@ -163,39 +157,53 @@ const MyUploadedNotes = () => {
 
            <main className="
     ml-0
-    md:ml-[215px]
-    lg:ml-[220px]
+    lg:ml-[215px]
 
-    lg:ml-56
-          p-4
-          sm:p-6
-          lg:p-8
-          pb-24
-          min-h-[calc(100vh-4rem)]
+    pt-20
+    sm:pt-10
 
-    min-h-screen
+    p-4
+    sm:p-6
+    lg:p-8
+
+    pb-24
+
+    min-h-[calc(100vh-4rem)]
+    min-w-0
+    w-80%
 
     transition-all
     duration-200
-">
+  ">
 
 
                 {/* ================================================= */}
                 {/* HEADER */}
                 {/* ================================================= */}
 
-                <div className="
-                    flex
-                    flex-col
-                    sm:flex-row
-
-                    sm:items-center
-                    sm:justify-between
-
-                    gap-5
-
-                    mb-8
-                ">
+                <div  className="
+            bg-white
+            dark:bg-slate-900
+            border
+            border-gray-200
+            dark:border-slate-800
+            rounded-2xl
+            px-4
+            sm:px-6
+            lg:px-8
+            py-4
+            mb-5
+            sm:py-5
+            flex
+            flex-col
+            sm:flex-row
+            sm:items-center
+            sm:justify-between
+            gap-4
+            shadow-sm
+            dark:shadow-none
+            transition-colors
+          ">
 
 
                     {/* TITLE */}
@@ -237,29 +245,24 @@ const MyUploadedNotes = () => {
 
                             {/* TEXT */}
 
-                            <div>
+                            <div className="min-w-0">
 
-                                <h1 className="
-                                    text-2xl
-                                    sm:text-3xl
-
-                                    font-bold
-
-                                    text-gray-900
-                                    dark:text-white
-                                ">
+                                <h1
+                className="
+                  text-xl
+                  sm:text-2xl
+                  md:text-3xl
+                  font-bold
+                  text-gray-900
+                  dark:text-white
+                  truncate
+                "
+              >
                                     My Uploaded Notes
                                 </h1>
 
 
-                                <p className="
-                                    text-sm
-                                    sm:text-base
-
-                                    text-gray-500
-                                    dark:text-gray-400
-
-                                    mt-1
+                                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1
                                 ">
                                     Manage the notes you have uploaded
                                     for sale.
@@ -278,34 +281,26 @@ const MyUploadedNotes = () => {
                         onClick={() =>
                             navigate("/sell-notes")
                         }
-                        className="
-                            w-full
-                            sm:w-auto
-
-                            flex
-                            items-center
-                            justify-center
-                            gap-2
-
-                            px-5
-                            py-3
-
-                            rounded-xl
-
-                            bg-cyan-500
-                            hover:bg-cyan-400
-
-                            text-black
-
-                            font-semibold
-
-                            shadow-sm
-
-                            transition-all
-                            duration-200
-
-                            hover:-translate-y-0.5
-                        "
+                         className="
+              w-full
+              sm:w-auto
+              min-h-[44px]
+              bg-blue-600
+              hover:bg-blue-700
+              active:bg-blue-800
+              text-white
+              px-5
+              py-3
+              rounded-xl
+              flex
+              items-center
+              justify-center
+              gap-2
+              font-semibold
+              transition
+              shadow-sm
+              shrink-0
+            "
                     >
 
                         <FaPlus />
@@ -316,10 +311,6 @@ const MyUploadedNotes = () => {
 
                 </div>
 
-
-                {/* ================================================= */}
-                {/* LOADING */}
-                {/* ================================================= */}
 
                 {loading && (
 

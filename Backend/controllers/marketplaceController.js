@@ -6,10 +6,6 @@ import crypto from "crypto";
 import razorpay from "../config/razorpay.js";
 import sharp from "sharp";
 
-
-
-// GET ALL MARKETPLACE NOTES
-// GET ALL MARKETPLACE NOTES
 export const getMarketplaceNotes = (req, res) => {
     const sql = `
         SELECT
@@ -45,7 +41,6 @@ export const getMarketplaceNotes = (req, res) => {
     });
 };
 
-// CREATE MARKETPLACE NOTE
 export const createMarketplaceNote = (req, res) => {
 
     const sellerId = req.userId;
@@ -60,9 +55,6 @@ export const createMarketplaceNote = (req, res) => {
         fileName
     } = req.body;
 
-
-    // ================= VALIDATION =================
-
     if (
         !title ||
         !subject ||
@@ -71,84 +63,94 @@ export const createMarketplaceNote = (req, res) => {
         !filePath ||
         !fileName
     ) {
-
         return res.status(400).json({
             success: false,
             message: "Required fields are missing"
         });
-
     }
 
-
-    // ================= INSERT =================
-
-    const sql = `
-        INSERT INTO marketplace_notes
-        (
-            title,
-            subject,
-            unit,
-            description,
-            price,
-            seller_id,
-            seller_name,
-            file_path,
-            file_name
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    const sellerSql = `
+        SELECT name
+        FROM users
+        WHERE id = ?
     `;
 
-
-    // Temporary seller name
-    // We will make this come from users table
-    // after checking your users table structure.
-
-    const sellerName = "Student";
-
-
-    const values = [
-        title,
-        subject,
-        unit,
-        description || "",
-        Number(price),
-        sellerId,
-        sellerName,
-        filePath,
-        fileName
-    ];
-
-
     db.query(
-        sql,
-        values,
-        (err, result) => {
+        sellerSql,
+        [sellerId],
+        (sellerErr, sellerResults) => {
 
-            if (err) {
-
-                console.error(
-                    "CREATE MARKETPLACE NOTE ERROR:",
-                    err
-                );
+            if (sellerErr) {
+                console.error("SELLER FETCH ERROR:", sellerErr);
 
                 return res.status(500).json({
                     success: false,
-                    message: "Failed to create marketplace note"
+                    message: "Failed to fetch seller"
                 });
-
             }
 
+            if (sellerResults.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Seller not found"
+                });
+            }
 
-            return res.status(201).json({
+            const sellerName = sellerResults[0].name;
 
-                success: true,
+            const sql = `
+                INSERT INTO marketplace_notes
+                (
+                    title,
+                    subject,
+                    unit,
+                    description,
+                    price,
+                    seller_id,
+                    seller_name,
+                    file_path,
+                    file_name
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `;
 
-                message: "Note listed successfully",
+            const values = [
+                title,
+                subject,
+                unit,
+                description || "",
+                Number(price),
+                sellerId,
+                sellerName,
+                filePath,
+                fileName
+            ];
 
-                noteId: result.insertId
+            db.query(
+                sql,
+                values,
+                (err, result) => {
 
-            });
+                    if (err) {
+                        console.error(
+                            "CREATE MARKETPLACE NOTE ERROR:",
+                            err
+                        );
 
+                        return res.status(500).json({
+                            success: false,
+                            message: "Failed to create marketplace note"
+                        });
+                    }
+
+                    return res.status(201).json({
+                        success: true,
+                        message: "Note listed successfully",
+                        noteId: result.insertId
+                    });
+
+                }
+            );
         }
     );
 };
@@ -282,12 +284,6 @@ export const createMarketplaceOrder = (req, res) => {
     }
   });
 };
-
-
-// ==========================================
-// VERIFY PAYMENT
-// ==========================================
-
 export const verifyMarketplacePayment = (req, res) => {
 
   const userId = req.user.id;
@@ -439,10 +435,6 @@ export const verifyMarketplacePayment = (req, res) => {
     );
   });
 };
-// ==========================================
-// PREVIEW MARKETPLACE PDF
-// ==========================================
-
 export const previewMarketplaceNote = async (req, res) => {
     try {
         const { id } = req.params;

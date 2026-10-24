@@ -161,42 +161,56 @@ export const getSingleNote = (req, res) => {
 export const updateNote = (req, res) => {
 
     const { id } = req.params;
-
     const { title, content, dueDate } = req.body;
+
+    console.log("UPDATE NOTE DATA:", {
+        id,
+        title,
+        content,
+        dueDate,
+        userId: req.userId
+    });
 
     const sql = `
         UPDATE notes
-        SET
-        title=?,
-        content=?,
-        dueDate=?
+        SET title=?, content=?, dueDate=?
         WHERE id=? AND userId=?
     `;
 
     db.query(
         sql,
-        [title, content, dueDate || null, id, req.userId],
+        [
+            title,
+            content,
+            dueDate || null,
+            id,
+            req.userId
+        ],
         (err, result) => {
 
             if (err) {
+                console.error("UPDATE NOTE DB ERROR:", err);
+
                 return res.status(500).json({
-                    message: "Database Error"
+                    success: false,
+                    message: "Database Error",
+                    error: err.message
                 });
             }
 
             if (result.affectedRows === 0) {
                 return res.status(404).json({
+                    success: false,
                     message: "Note Not Found"
                 });
             }
 
             return res.status(200).json({
+                success: true,
                 message: "Note Updated Successfully"
             });
-
         }
     );
-
 };
 export const deleteNote = (req, res) => {
 
@@ -390,4 +404,67 @@ export const completeTask = (req, res) => {
 
     });
 
+};
+export const getNotePdf = (req, res) => {
+    const { id } = req.params;
+
+    const sql = `
+        SELECT filePath, fileName
+        FROM notes
+        WHERE id = ? AND userId = ?
+    `;
+
+    db.query(sql, [id, req.userId], async (err, result) => {
+
+        if (err) {
+            console.error(err);
+            return res.status(500).json({
+                message: "Database Error"
+            });
+        }
+
+        if (result.length === 0) {
+            return res.status(404).json({
+                message: "Note Not Found"
+            });
+        }
+
+        const note = result[0];
+
+        if (!note.filePath) {
+            return res.status(404).json({
+                message: "PDF not attached"
+            });
+        }
+
+        try {
+            const file = bucket.file(note.filePath);
+
+            const [exists] = await file.exists();
+
+            if (!exists) {
+                return res.status(404).json({
+                    message: "PDF file not found"
+                });
+            }
+
+            const [buffer] = await file.download();
+
+            res.setHeader("Content-Type", "application/pdf");
+            res.setHeader(
+                "Content-Disposition",
+                `inline; filename="${note.fileName || "note.pdf"}"`
+            );
+
+            res.send(buffer);
+
+        } catch (error) {
+
+            console.error("PDF DOWNLOAD ERROR:", error);
+
+            return res.status(500).json({
+                message: "Failed to load PDF"
+            });
+        }
+    });
 };

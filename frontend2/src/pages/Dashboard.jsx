@@ -147,28 +147,12 @@ function Dashboard() {
               Due Today
             </p>
           </div>
+          
         </div>
 
-        {/* <section className="mt-8 w-full lg:w-1/2 lg:mt-10 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-5 dark:text-white">
-            📈 Notes Activity
-          </h2>
-
-          <div className="overflow-x-auto">
-            <DashboardChart />
-          </div>
-        </section>
-        <section className="mt-8 w-full lg:w-1/2 lg:mt-10 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-5 dark:text-white">
-            📈 Find Your Notes
-          </h2>
-
-          <div className="overflow-x-auto">
-            
-          </div>
-        </section> */}
+       
         <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-stretch">
-          {/* ================= NOTES ACTIVITY ================= */}
+          
           <section
             className="w-full lg:w-1/2 bg-white dark:bg-slate-900
     rounded-2xl lg:rounded-3xl shadow-lg
@@ -184,18 +168,23 @@ function Dashboard() {
           </section>
 
           {/* ================= FIND YOUR NOTES ================= */}
-          <section
-            className="w-full lg:w-1/2 bg-white dark:bg-slate-900
-    rounded-2xl lg:rounded-3xl shadow-lg
+         <section
+  className="
+    notes-scroll
+    w-full lg:w-1/2
+    bg-white dark:bg-slate-900
+    rounded-2xl lg:rounded-3xl
+    shadow-lg
     p-4 sm:p-6 lg:p-8
-    flex flex-col"
-          >
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-5 dark:text-white">
-              📚 Find Your Notes
-            </h2>
+    flex flex-col
+    max-h-[600px]
+    overflow-y-auto
+  "
+>
+ 
 
-            <FindNotes />
-          </section>
+  <FindNotes />
+</section>
         </div>
 
         <section className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8 mt-8 lg:mt-10">

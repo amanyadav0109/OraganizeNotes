@@ -4,6 +4,7 @@ import { ArrowLeft, Plus } from "lucide-react";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
+import { getSubjects } from "../services/subjectService";
 import {
   getNotesBySubject,
   deleteNote,
@@ -16,7 +17,7 @@ import BottomNav from "../components/BottomNav";
 function SubjectNotes() {
   const { id } = useParams();
   const navigate = useNavigate();
-
+const [subjectName, setSubjectName] = useState("");
   const [selectedContent, setSelectedContent] = useState("");
   const [notes, setNotes] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -54,6 +55,26 @@ function SubjectNotes() {
   useEffect(() => {
     loadNotes();
   }, [id]);
+  useEffect(() => {
+    const loadSubject = async () => {
+        try {
+            const subjects = await getSubjects();
+
+            const subject = subjects.find(
+                (item) => Number(item.id) === Number(id)
+            );
+
+            if (subject) {
+                setSubjectName(subject.subjectName);
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    loadSubject();
+    loadNotes();
+}, [id]);
 
   return (
     <div className="page min-h-screen bg-gray-50 dark:bg-[#080d18] transition-colors duration-200">
@@ -142,27 +163,27 @@ function SubjectNotes() {
               <ArrowLeft size={22} />
             </button>
 
-            <div className="min-w-0">
+           <div className="min-w-0">
 
-              <h1
-                className="
-                  text-xl
-                  sm:text-2xl
-                  md:text-3xl
-                  font-bold
-                  text-gray-900
-                  dark:text-white
-                  truncate
-                "
-              >
-                Subject Notes
-              </h1>
+    <h1
+        className="
+            text-xl
+            sm:text-2xl
+            md:text-3xl
+            font-bold
+            text-gray-900
+            dark:text-white
+            truncate
+        "
+    >
+        {subjectName || "Subject Notes"}
+    </h1>
 
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Manage your notes for this subject
-              </p>
+    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+        Manage your notes for this subject
+    </p>
 
-            </div>
+</div>
 
           </div>
 

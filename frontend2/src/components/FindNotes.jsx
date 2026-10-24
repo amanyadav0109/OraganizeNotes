@@ -53,10 +53,6 @@ const FindNotes = () => {
         );
     });
 
-    // ==============================
-    // LOADING
-    // ==============================
-
     if (loading) {
         return (
             <section
@@ -100,10 +96,6 @@ const FindNotes = () => {
         );
     }
 
-    // ==============================
-    // ERROR
-    // ==============================
-
     if (error) {
         return (
             <section
@@ -123,7 +115,9 @@ const FindNotes = () => {
             >
                 <div className="flex items-center justify-center min-h-[400px]">
                     <div className="text-center">
-                        <p className="text-4xl mb-3">⚠️</p>
+                        <p className="text-4xl mb-3">
+                            ⚠️
+                        </p>
 
                         <p className="text-red-500 dark:text-red-400">
                             {error}
@@ -139,7 +133,6 @@ const FindNotes = () => {
             className="
                 w-full
                 min-h-[500px]
-                h-full
                 rounded-3xl
                 p-6
                 sm:p-8
@@ -155,11 +148,9 @@ const FindNotes = () => {
             "
         >
 
-            {/* =====================================
-                HEADER
-            ===================================== */}
+            {/* HEADER */}
 
-            <div className="flex items-center gap-3 mb-7">
+            <div className="flex items-center gap-3 mb-4">
 
                 <div
                     className="
@@ -177,7 +168,8 @@ const FindNotes = () => {
                     📚
                 </div>
 
-                <div>
+                <div className="min-w-0">
+
                     <h1
                         className="
                             text-2xl
@@ -200,16 +192,14 @@ const FindNotes = () => {
                     >
                         Discover useful notes from other students
                     </p>
+
                 </div>
 
             </div>
 
+            {/* SEARCH */}
 
-            {/* =====================================
-                SEARCH
-            ===================================== */}
-
-            <div className="relative mb-5">
+            <div className="relative mb-3">
 
                 <span
                     className="
@@ -253,12 +243,9 @@ const FindNotes = () => {
 
             </div>
 
+            {/* RESULT COUNT */}
 
-            {/* =====================================
-                RESULT COUNT
-            ===================================== */}
-
-            <div className="mb-5">
+            <div className="mb-2">
 
                 <p className="text-sm text-slate-500 dark:text-slate-400">
 
@@ -271,16 +258,14 @@ const FindNotes = () => {
                     {filteredNotes.length === 1
                         ? "note"
                         : "notes"}{" "}
+
                     available
 
                 </p>
 
             </div>
 
-
-            {/* =====================================
-                NO RESULTS
-            ===================================== */}
+            {/* NOTES */}
 
             {filteredNotes.length === 0 ? (
 
@@ -290,7 +275,7 @@ const FindNotes = () => {
                         flex-1
                         items-center
                         justify-center
-                        min-h-[280px]
+                        min-h-[260px]
                     "
                 >
 
@@ -342,16 +327,12 @@ const FindNotes = () => {
 
             ) : (
 
-                /* =====================================
-                   NOTES
-                ===================================== */
-
                 <div
                     className="
                         notes-scroll
-                        flex-1
+                        h-[260px]
                         overflow-y-auto
-                        space-y-4
+                        space-y-3
                         pr-2
                     "
                 >
@@ -362,6 +343,7 @@ const FindNotes = () => {
                             key={note.id}
                             className="
                                 group
+                                shrink-0
                                 rounded-2xl
                                 border
                                 border-slate-200
@@ -369,7 +351,6 @@ const FindNotes = () => {
                                 bg-slate-50
                                 dark:bg-[#1e293b]
                                 p-5
-                                sm:p-6
                                 transition-all
                                 duration-200
                                 hover:border-cyan-400
@@ -396,7 +377,6 @@ const FindNotes = () => {
                                 </h2>
 
                             </div>
-
 
                             {/* BADGES */}
 
@@ -434,7 +414,6 @@ const FindNotes = () => {
 
                             </div>
 
-
                             {/* DESCRIPTION */}
 
                             <p
@@ -444,11 +423,12 @@ const FindNotes = () => {
                                     dark:text-slate-400
                                     leading-6
                                     mb-4
+                                    line-clamp-2
                                 "
                             >
-                                {note.description}
+                                {note.description ||
+                                    "No description provided."}
                             </p>
-
 
                             {/* SELLER */}
 
@@ -464,7 +444,9 @@ const FindNotes = () => {
                                 "
                             >
 
-                                <span>👤</span>
+                                <span>
+                                    👤
+                                </span>
 
                                 <span>
                                     Seller:
@@ -481,7 +463,6 @@ const FindNotes = () => {
                                 </span>
 
                             </div>
-
 
                             {/* BOTTOM */}
 
@@ -523,7 +504,6 @@ const FindNotes = () => {
 
                                 </div>
 
-
                                 {/* GET NOTES */}
 
                                 <button
@@ -562,30 +542,33 @@ const FindNotes = () => {
                 </div>
 
             )}
-             <button
-    type="button"
-    onClick={() => navigate("/find-notes")}
-    className="
-      w-full
-      sm:w-auto
-      mt-5
-      px-5
-      py-3
-      rounded-xl
-      border
-      border-blue-500
-      text-blue-500
-      dark:text-blue-400
-      hover:bg-blue-500
-      hover:text-white
-      font-semibold
-      transition-all
-      duration-200
-      active:scale-95
-    "
-  >
-    View More 
-  </button>
+
+            {/* VIEW MORE */}
+
+            <button
+                type="button"
+                onClick={() => navigate("/find-notes")}
+                className="
+                    w-full
+                    sm:w-auto
+                    mt-3
+                    px-5
+                    py-3
+                    rounded-xl
+                    border
+                    border-blue-500
+                    text-blue-500
+                    dark:text-blue-400
+                    hover:bg-blue-500
+                    hover:text-white
+                    font-semibold
+                    transition-all
+                    duration-200
+                    active:scale-95
+                "
+            >
+                View More
+            </button>
 
         </section>
     );

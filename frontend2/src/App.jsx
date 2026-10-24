@@ -21,11 +21,12 @@ import MyUploadedNotes from "./pages/MyUploadedNotes";
 import EditMarketplaceNote from "./pages/EditMarketplaceNote";
 import ViewMarketplaceNote from "./pages/ViewMarketplaceNote";
 import AddNote from "./pages/AddNote";
+import EditNote from "./pages/EditNote";
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
-   
+   <Route path="/note/:id/edit" element={<EditNote />} />
       <Route path="/login" element={<Login />} />
       <Route path="/subject" element={<Subject />} />
       <Route path="/register" element={<Register />} />
