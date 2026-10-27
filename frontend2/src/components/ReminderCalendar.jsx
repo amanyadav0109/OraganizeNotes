@@ -81,10 +81,10 @@ function ReminderCalendar() {
 
       
 
-      <div className="mt-6">
+      <div className="mt-6 overflow-y-auto max-h-[300px] pr-2">
 
         <h3 className="text-lg sm:text-xl font-bold dark:text-white">
-          Reminders
+          Tasks on {format(selectedDate, "PPP")}
         </h3>
 
         {selectedNotes.length === 0 ? (

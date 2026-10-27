@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { getReminders } from "../services/reminderService";
 import { completeTask } from "../services/noteService";
@@ -13,7 +14,6 @@ function UpcomingReminders() {
   const load = async () => {
     try {
       const data = await getReminders();
-
       const now = new Date();
 
       setUpcoming(
@@ -23,7 +23,10 @@ function UpcomingReminders() {
               !note.isCompleted &&
               new Date(note.dueDate) > now
           )
-          .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+          .sort(
+            (a, b) =>
+              new Date(a.dueDate) - new Date(b.dueDate)
+          )
       );
 
       setOverdue(
@@ -33,7 +36,10 @@ function UpcomingReminders() {
               !note.isCompleted &&
               new Date(note.dueDate) <= now
           )
-          .sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate))
+          .sort(
+            (a, b) =>
+              new Date(b.dueDate) - new Date(a.dueDate)
+          )
       );
     } catch (err) {
       console.log(err);
@@ -43,7 +49,7 @@ function UpcomingReminders() {
   const handleComplete = async (id) => {
     try {
       await completeTask(id);
-      load();
+      await load();
     } catch (err) {
       console.log(err);
     }
@@ -51,17 +57,12 @@ function UpcomingReminders() {
 
   return (
     <div className="space-y-6">
-
-      {/* Heading */}
-
       <h2 className="text-2xl font-bold dark:text-white">
         🔔 Reminders
       </h2>
 
-      {/* Upcoming Card */}
-
+      {/* Upcoming */}
       <div className="rounded-2xl border border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/10 p-5 shadow">
-
         <h3 className="text-lg font-bold text-yellow-600 dark:text-yellow-400 mb-4">
           🟡 Upcoming
         </h3>
@@ -71,15 +72,12 @@ function UpcomingReminders() {
             No upcoming tasks.
           </p>
         ) : (
-          <div className="space-y-3">
-
+          <div className="max-h-[200px] overflow-y-auto pr-2 space-y-3">
             {upcoming.map((note) => (
-
               <div
                 key={note.id}
                 className="rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 p-4"
               >
-
                 <h3 className="font-semibold dark:text-white">
                   {note.title}
                 </h3>
@@ -87,20 +85,14 @@ function UpcomingReminders() {
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                   📅 {new Date(note.dueDate).toLocaleString()}
                 </p>
-
               </div>
-
             ))}
-
           </div>
         )}
-
       </div>
 
-      {/* Overdue Card */}
-
+      {/* Overdue */}
       <div className="rounded-2xl border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/10 p-5 shadow">
-
         <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-4">
           🔴 Overdue
         </h3>
@@ -110,19 +102,14 @@ function UpcomingReminders() {
             No overdue tasks.
           </p>
         ) : (
-          <div className="space-y-3">
-
+          <div className="max-h-[200px] overflow-y-auto pr-2 space-y-3">
             {overdue.map((note) => (
-
               <div
                 key={note.id}
                 className="rounded-xl bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 p-4"
               >
-
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
                   <div>
-
                     <h3 className="font-semibold dark:text-white">
                       {note.title}
                     </h3>
@@ -130,7 +117,6 @@ function UpcomingReminders() {
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                       📅 {new Date(note.dueDate).toLocaleString()}
                     </p>
-
                   </div>
 
                   <button
@@ -139,18 +125,12 @@ function UpcomingReminders() {
                   >
                     ✅ Complete
                   </button>
-
                 </div>
-
               </div>
-
             ))}
-
           </div>
         )}
-
       </div>
-
     </div>
   );
 }

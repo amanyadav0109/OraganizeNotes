@@ -8,6 +8,7 @@ import InterviewView from "./InterviewView";
 import MCQView from "./MCQView";
 
 function AIAssistant({ text, closeModal }) {
+    console.log("AI TEXT:", text);
   const [loading, setLoading] = useState(false);
 
   const [result, setResult] = useState("");

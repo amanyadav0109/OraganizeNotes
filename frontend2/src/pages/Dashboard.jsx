@@ -16,7 +16,7 @@ import UpcomingReminders from "../components/UpcomingReminders";
 import DashboardChart from "../components/DashboardChart";
 import FindNotes from "../components/FindNotes";
 import { getDashboardStats } from "../services/dashboardService";
-
+import TodayTasks from "../components/TodayTasks";
 function Dashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState({
@@ -147,12 +147,9 @@ function Dashboard() {
               Due Today
             </p>
           </div>
-          
         </div>
 
-       
         <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-stretch">
-          
           <section
             className="w-full lg:w-1/2 bg-white dark:bg-slate-900
     rounded-2xl lg:rounded-3xl shadow-lg
@@ -168,8 +165,8 @@ function Dashboard() {
           </section>
 
           {/* ================= FIND YOUR NOTES ================= */}
-         <section
-  className="
+          <section
+            className="
     notes-scroll
     w-full lg:w-1/2
     bg-white dark:bg-slate-900
@@ -180,27 +177,38 @@ function Dashboard() {
     max-h-[600px]
     overflow-y-auto
   "
->
- 
-
-  <FindNotes />
-</section>
+          >
+            <FindNotes />
+          </section>
         </div>
-
         <section className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8 mt-8 lg:mt-10">
           <div className="xl:col-span-2 flex flex-col gap-6">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-lg p-6">
-              <h2 className="text-2xl font-bold mb-5 dark:text-white">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8">
+              <h2 className="text-xl sm:text-2xl font-bold mb-5 dark:text-white">
                 📅 Calendar
               </h2>
-              <ReminderCalendar />
+
+              <div className="grid grid-cols-1 md:grid-cols-[350px_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
+                {/* Left side: Calendar */}
+                <div className="min-w-0 ">
+                  <ReminderCalendar />
+                </div>
+
+                {/* Right side: Today Tasks inside the same card */}
+                <div className="min-w-0">
+                  <TodayTasks />
+                </div>
+              </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-lg p-6">
-              <h2 className="text-2xl font-bold mb-5 dark:text-white">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-lg p-6 flex flex-col max-h-[400px]">
+              <h2 className="text-2xl font-bold mb-5 dark:text-white shrink-0">
                 ✅ Recently Completed
               </h2>
-              <CompletedTasks />
+
+              <div className="overflow-y-auto max-h-[300px] pr-2">
+                <CompletedTasks />
+              </div>
             </div>
           </div>
           <div className="bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8 h-full">
