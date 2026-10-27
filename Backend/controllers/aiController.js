@@ -199,26 +199,15 @@ ${text}
       output: JSON.stringify(parsed),
     });
   } catch (err) {
-    console.error("=========== AI ERROR ===========");
-    console.error("Message:", err.message);
-    console.error("Status:", err.status);
-    console.error("Cause:", err.cause);
-    console.error("Error details:", err.errorDetails);
+  console.error("=== GEMINI API ERROR ===");
+  console.error("Message:", err.message);
+  console.error("Status:", err.status);
+  console.error("Status code:", err.statusCode);
+  console.error("Error details:", err.errorDetails);
 
-    if (err.status === 503 || err.status === 429) {
-      return res.status(err.status).json({
-        message: "Gemini is temporarily busy or rate-limited. Please retry.",
-      });
-    }
-
-    if (err.message?.toLowerCase().includes("api key")) {
-      return res.status(500).json({
-        message: "Check the Gemini API key configured on Render.",
-      });
-    }
-
-    return res.status(500).json({
-      message: "AI generation failed. Please check the backend logs.",
-    });
-  }
+  return res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "AI generation failed",
+  });
+}
 };
