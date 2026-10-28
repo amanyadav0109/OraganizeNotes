@@ -6,17 +6,25 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const MODEL_NAME = "gemini-3.8-flash";
 const DAILY_FREE_LIMIT = 5;
-const MAX_RETRIES = 3;
+const MAX_ATTEMPTS = 2;
 
 const sleep = (ms) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-export const generateAI = async (req, res) => {
-  let usageReserved = false;
-  let userId;
+const isTemporaryError = (err) => {
+  const message = err.message?.toLowerCase() || "";
 
+  return (
+    err.status === 503 ||
+    message.includes("fetch failed") ||
+    err.cause?.code === "ECONNRESET" ||
+    err.cause?.code === "ETIMEDOUT"
+  );
+};
+
+export const generateAI = async (req, res) => {
   try {
-    userId = req.userId;
+    const userId = req.userId;
 
     if (!userId) {
       return res.status(401).json({
@@ -41,74 +49,45 @@ export const generateAI = async (req, res) => {
       });
     }
 
-    // Atomically reserve one daily use for free users.
-    // The database date is used consistently for the daily limit.
-    const [reservation] = await db.promise().execute(
-      `UPDATE users
-       SET ai_usage_count =
-             CASE
-               WHEN ai_usage_date = UTC_DATE()
-                 THEN ai_usage_count + 1
-               ELSE 1
-             END,
-           ai_usage_date = UTC_DATE()
-       WHERE id = ?
-         AND (
-           plan = 'premium'
-           OR ai_usage_date IS NULL
-           OR ai_usage_date <> UTC_DATE()
-           OR ai_usage_count < ?
-         )`,
-      [userId, DAILY_FREE_LIMIT]
-    );
-
-    if (reservation.affectedRows === 0) {
-      const [users] = await db.promise().execute(
-        "SELECT id, plan, ai_usage_count, ai_usage_date FROM users WHERE id = ?",
-        [userId]
-      );
-
-      if (!users.length) {
-        return res.status(404).json({
-          success: false,
-          message: "User account not found.",
-        });
-      }
-
-      const user = users[0];
-
-      if (
-        user.plan !== "premium" &&
-        user.ai_usage_date &&
-        String(user.ai_usage_date).slice(0, 10) ===
-          new Date().toISOString().slice(0, 10) &&
-        user.ai_usage_count >= DAILY_FREE_LIMIT
-      ) {
-        return res.status(403).json({
-          success: false,
-          upgradeRequired: true,
-          message:
-            "You have used all 5 free AI generations for today. Upgrade to Premium for more access.",
-        });
-      }
-
-      return res.status(500).json({
-        success: false,
-        message: "Could not verify your AI usage. Please try again.",
-      });
-    }
-
-    // Premium usage is not restricted. Free usage is reserved
-    // before the Gemini call to prevent concurrent requests bypassing the limit.
-    const [userRows] = await db.promise().execute(
-      "SELECT plan FROM users WHERE id = ?",
+    // 1. Fetch the user's current plan and today's usage.
+    const [users] = await db.promise().execute(
+      `SELECT
+         id,
+         plan,
+         ai_usage_count,
+         ai_usage_date,
+         (ai_usage_date = UTC_DATE()) AS usage_is_today
+       FROM users
+       WHERE id = ?`,
       [userId]
     );
 
-    const isPremium = userRows[0]?.plan === "premium";
-    usageReserved = !isPremium;
+    if (!users.length) {
+      return res.status(404).json({
+        success: false,
+        message: "User account not found.",
+      });
+    }
 
-    let prompt = "";
+    const user = users[0];
+    const isPremium = user.plan === "premium";
+
+    // 2. Block free users who have already used 5 generations today.
+    if (
+      !isPremium &&
+      Number(user.usage_is_today) === 1 &&
+      Number(user.ai_usage_count) >= DAILY_FREE_LIMIT
+    ) {
+      return res.status(403).json({
+        success: false,
+        upgradeRequired: true,
+        message:
+          "You have used all 5 free AI generations for today. Upgrade to Premium for more access.",
+      });
+    }
+
+    // 3. Prepare the prompt.
+    let prompt;
 
     switch (action) {
       case "summary":
@@ -174,45 +153,43 @@ ${text}
         break;
     }
 
-    console.log("AI CONTROLLER VERSION: daily-limit-v1");
+    console.log("AI CONTROLLER VERSION: daily-limit-v2");
+    console.log("AI ACTION:", action);
+    console.log("USER ID:", userId);
     console.log("GEMINI MODEL:", MODEL_NAME);
-console.log("AI CONTROLLER CALLED");
-console.log("USER ID:", req.userId);
+
     const model = genAI.getGenerativeModel({
       model: MODEL_NAME,
-        generationConfig: {
-    thinkingConfig: {
-      thinkingLevel: "low"
-    }
-  }
+      generationConfig: {
+        thinkingConfig: {
+          thinkingLevel: "low",
+        },
+      },
     });
-    console.log("USAGE UPDATE RESULT:", result.affectedRows);
 
+    // 4. Generate the response. Retries are for temporary errors only.
     let result;
 
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       try {
         result = await model.generateContent(prompt);
         break;
       } catch (err) {
-        console.error(`Gemini attempt ${attempt} failed:`, err.message);
+        console.error(
+          `Gemini attempt ${attempt} failed:`,
+          err.message
+        );
 
-        // A quota error will not be fixed by retrying.
+        // Retrying a quota error will not restore the quota.
         if (err.status === 429) {
           throw err;
         }
 
-        const isTemporary =
-          err.status === 503 ||
-          err.message?.toLowerCase().includes("fetch failed") ||
-          err.cause?.code === "ECONNRESET" ||
-          err.cause?.code === "ETIMEDOUT";
-
-        if (!isTemporary || attempt === MAX_RETRIES) {
+        if (!isTemporaryError(err) || attempt === MAX_ATTEMPTS) {
           throw err;
         }
 
-        await sleep(attempt * 1000);
+        await sleep(1000);
       }
     }
 
@@ -225,6 +202,8 @@ console.log("USER ID:", req.userId);
       .replace(/```/g, "")
       .trim();
 
+    // 5. Parse before incrementing usage.
+    // Invalid responses do not consume a successful generation.
     let parsed;
 
     try {
@@ -232,10 +211,11 @@ console.log("USER ID:", req.userId);
     } catch {
       return res.status(502).json({
         success: false,
-        message: "Gemini returned an invalid response. Please retry.",
+        message: "Gemini returned invalid JSON. Please try again.",
       });
     }
 
+    // 6. Normalize the generated data.
     switch (action) {
       case "summary":
         parsed.title = parsed.title || "Summary";
@@ -272,37 +252,95 @@ console.log("USER ID:", req.userId);
         break;
     }
 
+    // 7. Count only successful generations.
+    // The conditional UPDATE protects the limit if requests overlap.
+    if (!isPremium) {
+      const [updateResult] = await db.promise().execute(
+        `UPDATE users
+         SET ai_usage_count =
+               CASE
+                 WHEN ai_usage_date = UTC_DATE()
+                   THEN ai_usage_count + 1
+                 ELSE 1
+               END,
+             ai_usage_date = UTC_DATE()
+         WHERE id = ?
+           AND (
+             ai_usage_date IS NULL
+             OR ai_usage_date <> UTC_DATE()
+             OR ai_usage_count < ?
+           )`,
+        [userId, DAILY_FREE_LIMIT]
+      );
+
+      if (updateResult.affectedRows !== 1) {
+        // Another simultaneous request may have used the last slot.
+        const [latestUsers] = await db.promise().execute(
+          `SELECT
+             plan,
+             ai_usage_count,
+             (ai_usage_date = UTC_DATE()) AS usage_is_today
+           FROM users
+           WHERE id = ?`,
+          [userId]
+        );
+
+        if (!latestUsers.length) {
+          return res.status(404).json({
+            success: false,
+            message: "User account not found.",
+          });
+        }
+
+        const latest = latestUsers[0];
+
+        if (
+          latest.plan !== "premium" &&
+          Number(latest.usage_is_today) === 1 &&
+          Number(latest.ai_usage_count) >= DAILY_FREE_LIMIT
+        ) {
+          return res.status(403).json({
+            success: false,
+            upgradeRequired: true,
+            message:
+              "You have used all 5 free AI generations for today. Upgrade to Premium for more access.",
+          });
+        }
+
+        return res.status(500).json({
+          success: false,
+          message: "Could not update AI usage. Please try again.",
+        });
+      }
+    }
+
+    console.log(
+      isPremium
+        ? "Premium AI generation completed."
+        : "Free AI usage count updated."
+    );
+
     return res.json({
       success: true,
       output: JSON.stringify(parsed),
     });
   } catch (err) {
-    console.error("Gemini API Error:", err.message);
-    console.error("Status:", err.status);
-
-    // Release the reserved free use if generation fails.
-    // This avoids charging a use for a failed generation.
-    if (usageReserved && userId) {
-      try {
-        await db.promise().execute(
-          `UPDATE users
-           SET ai_usage_count = GREATEST(ai_usage_count - 1, 0)
-           WHERE id = ? AND ai_usage_date = UTC_DATE()`,
-          [userId]
-        );
-      } catch (rollbackError) {
-        console.error(
-          "Could not restore AI usage:",
-          rollbackError.message
-        );
-      }
-    }
+    console.error("AI GENERATION ERROR:", err.message);
+    console.error("HTTP STATUS:", err.status || "unknown");
 
     if (err.status === 429) {
       return res.status(429).json({
         success: false,
         message:
-          "Google AI quota is currently exhausted. Please try again after it resets.",
+          "Google AI quota is exhausted. Please try again after the quota resets.",
+      });
+    }
+
+    if (err.status === 503) {
+      return res.status(503).json({
+        success: false,
+        message:
+          "The AI service is temporarily busy. Please try again shortly.",
       });
     }
 
