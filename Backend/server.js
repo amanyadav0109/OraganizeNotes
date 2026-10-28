@@ -51,7 +51,7 @@ app.use(
   marketplaceDownloadRoutes
 );
 
-app.use("/api/subscription", subscriptionRoutes);
+app.use("/api/subscription",subscriptionRoutes);
 
 app.use(
   "/api/marketplace/payment",
