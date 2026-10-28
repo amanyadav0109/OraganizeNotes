@@ -350,10 +350,6 @@ function SubscriptionModal({ closeModal }) {
             : "Pay ₹199 with Razorpay"}
         </button>
 
-        {/* ====================================
-            FOOTER
-        ===================================== */}
-
         <p className="mt-3 text-center text-xs text-gray-500">
           Secure payment powered by Razorpay
         </p>
