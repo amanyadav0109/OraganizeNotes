@@ -1,4 +1,5 @@
 
+
 import { GoogleGenAI } from "@google/genai";
 import db from "../config/db.js";
 
@@ -166,15 +167,14 @@ export const generateAI = async (req, res) => {
       req.body?.notes ??
       req.body?.noteContent;
 
-    // Validate before starting a database transaction.
     const prompt = buildPrompt(type, content);
 
-    // Use a dedicated connection so concurrent requests for the same
-    // user cannot reserve or roll back each other's daily usage.
     connection = await db.promise().getConnection();
+
     await connection.beginTransaction();
     transactionStarted = true;
 
+    // Get user and lock the row while checking daily usage.
     const [users] = await connection.execute(
       `SELECT id, plan, ai_usage_count, ai_usage_date
        FROM users
@@ -187,12 +187,31 @@ export const generateAI = async (req, res) => {
     if (!users.length) {
       await connection.rollback();
       transactionStarted = false;
+
       return sendError(res, 404, "User not found.");
     }
 
     const user = users[0];
+
+    // Check whether this user has an active, non-expired subscription.
+    const [subscriptionRows] = await connection.execute(
+      `SELECT EXISTS (
+         SELECT 1
+         FROM user_subscriptions
+         WHERE user_id = ?
+           AND status = 'active'
+           AND expires_at > NOW()
+       ) AS has_active_subscription`,
+      [userId]
+    );
+
+    const hasActiveSubscription =
+      Number(subscriptionRows[0]?.has_active_subscription ?? 0) === 1;
+
+    // Support both the users.plan field and the subscription table.
     const isPremium =
-      String(user.plan ?? "free").toLowerCase() === "premium";
+      String(user.plan ?? "free").toLowerCase() === "premium" ||
+      hasActiveSubscription;
 
     const [usageRows] = await connection.execute(
       `SELECT
@@ -209,6 +228,7 @@ export const generateAI = async (req, res) => {
 
     const used = Number(usageRows[0]?.used ?? 0);
 
+    // Only non-Premium users are restricted by the daily free limit.
     if (!isPremium && used >= DAILY_FREE_LIMIT) {
       await connection.rollback();
       transactionStarted = false;
@@ -248,7 +268,7 @@ export const generateAI = async (req, res) => {
 
     const result = parseAIResponse(response.text);
 
-    // Count only a successfully generated and parsed response.
+    // Count successful generations only for Free users.
     let newUsage = used;
 
     if (!isPremium) {
@@ -279,14 +299,19 @@ export const generateAI = async (req, res) => {
       result,
       data: result,
       usage,
+      isPremium,
     });
   } catch (error) {
     if (transactionStarted && connection) {
       try {
         await connection.rollback();
       } catch (rollbackError) {
-        console.error("AI TRANSACTION ROLLBACK ERROR:", rollbackError.message);
+        console.error(
+          "AI TRANSACTION ROLLBACK ERROR:",
+          rollbackError.message
+        );
       }
+
       transactionStarted = false;
     }
 

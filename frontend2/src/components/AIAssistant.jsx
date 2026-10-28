@@ -208,8 +208,7 @@ function AIAssistant({ text, closeModal }) {
                 👑 Premium Activated Successfully!
               </p>
               <p className="mt-1 text-green-700 dark:text-green-300">
-                Ab aap AI features use kar sakte ho. Neeche se koi
-                feature select karein.
+                  You can now use AI features. Select a feature below to get started.
               </p>
             </div>
           )}
