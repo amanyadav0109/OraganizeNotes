@@ -1,5 +1,5 @@
-import { useState } from "react";
 
+import { useState } from "react";
 import {
   FaRobot,
   FaTimes,
@@ -9,7 +9,6 @@ import {
 } from "react-icons/fa";
 
 import { generateAI } from "../services/aiService";
-
 import SummaryView from "./SummaryView";
 import InterviewView from "./InterviewView";
 import MCQView from "./MCQView";
@@ -22,8 +21,9 @@ function AIAssistant({ text, closeModal }) {
   const [error, setError] = useState("");
   const [upgradeRequired, setUpgradeRequired] = useState(false);
 
-  // Subscription popup
   const [showSubscription, setShowSubscription] = useState(false);
+  const [premiumActive, setPremiumActive] = useState(false);
+  const [subscriptionSuccess, setSubscriptionSuccess] = useState(false);
 
   const actions = [
     {
@@ -43,10 +43,7 @@ function AIAssistant({ text, closeModal }) {
     },
   ];
 
-  // ==========================================
   // AI GENERATION
-  // ==========================================
-
   const runAI = async (action) => {
     if (typeof text !== "string" || !text.trim()) {
       setError("This note is empty. Please add some content first.");
@@ -58,40 +55,30 @@ function AIAssistant({ text, closeModal }) {
     setResult(null);
     setError("");
     setUpgradeRequired(false);
+    setSubscriptionSuccess(false);
 
     try {
-      // aiService.js must return the complete res.data object.
       const payload = await generateAI(action, text);
 
       if (!payload || typeof payload !== "object") {
-        throw new Error(
-          "Invalid response received from the AI server."
-        );
+        throw new Error("Invalid response received from the AI server.");
       }
 
       if (payload.success === false) {
         const apiError = new Error(
           payload.message || "AI generation failed."
         );
-
         apiError.upgradeRequired = payload.upgradeRequired;
-
         throw apiError;
       }
 
-      const output =
-        payload.result ??
-        payload.output ??
-        payload.data;
+      const output = payload.result ?? payload.output ?? payload.data;
 
       if (
         output == null ||
-        (typeof output !== "object" &&
-          typeof output !== "string")
+        (typeof output !== "object" && typeof output !== "string")
       ) {
-        throw new Error(
-          "The AI server returned no generated content."
-        );
+        throw new Error("The AI server returned no generated content.");
       }
 
       let parsedOutput = output;
@@ -100,9 +87,7 @@ function AIAssistant({ text, closeModal }) {
         try {
           parsedOutput = JSON.parse(output);
         } catch {
-          throw new Error(
-            "The AI response is not valid JSON."
-          );
+          throw new Error("The AI response is not valid JSON.");
         }
       }
 
@@ -113,12 +98,8 @@ function AIAssistant({ text, closeModal }) {
       const response = err.response?.data;
       const status = err.response?.status;
 
-      if (
-        response?.upgradeRequired ||
-        err.upgradeRequired
-      ) {
+      if (response?.upgradeRequired || err.upgradeRequired) {
         setUpgradeRequired(true);
-
         setError(
           response?.message ||
             err.message ||
@@ -129,10 +110,7 @@ function AIAssistant({ text, closeModal }) {
           response?.message ||
             "Gemini API quota exceeded. Please try again later."
         );
-      } else if (
-        status === 502 ||
-        status === 503
-      ) {
+      } else if (status === 502 || status === 503) {
         setError(
           response?.message ||
             "The AI service failed or is busy. Please try again."
@@ -149,10 +127,7 @@ function AIAssistant({ text, closeModal }) {
     }
   };
 
-  // ==========================================
   // COPY RESULT
-  // ==========================================
-
   const copy = async () => {
     if (!result) return;
 
@@ -160,19 +135,13 @@ function AIAssistant({ text, closeModal }) {
       await navigator.clipboard.writeText(
         JSON.stringify(result, null, 2)
       );
-
       alert("Copied successfully!");
     } catch {
-      setError(
-        "Unable to copy. Please copy the response manually."
-      );
+      setError("Unable to copy. Please copy the response manually.");
     }
   };
 
-  // ==========================================
-  // RESET ASSISTANT
-  // ==========================================
-
+  // RESET / BACK
   const resetAssistant = () => {
     setSelectedAction("");
     setResult(null);
@@ -180,81 +149,89 @@ function AIAssistant({ text, closeModal }) {
     setUpgradeRequired(false);
   };
 
-  // ==========================================
-  // OPEN SUBSCRIPTION POPUP
-  // ==========================================
-
+  // OPEN SUBSCRIPTION
   const handleUpgrade = () => {
     setShowSubscription(true);
   };
 
-  // ==========================================
-  // UI
-  // ==========================================
+  // CALLED AFTER SUCCESSFUL PAYMENT VERIFICATION
+  const handleSubscriptionSuccess = () => {
+    setPremiumActive(true);
+    setSubscriptionSuccess(true);
+    setUpgradeRequired(false);
+    setError("");
+    setShowSubscription(false);
+    setSelectedAction("");
+    setResult(null);
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex justify-center items-center z-50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-md">
+      <div className="flex h-[95vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900 sm:h-[90vh] sm:max-w-2xl lg:max-w-5xl lg:rounded-3xl xl:max-w-6xl">
 
-      {/* ======================================
-          MAIN AI MODAL
-      ======================================= */}
-
-      <div className="bg-white dark:bg-slate-900 w-full max-w-sm sm:max-w-2xl lg:max-w-5xl xl:max-w-6xl h-[95vh] sm:h-[90vh] rounded-2xl lg:rounded-3xl shadow-2xl overflow-hidden border border-gray-200 dark:border-slate-700 flex flex-col">
-
-        {/* ======================================
-            HEADER
-        ======================================= */}
-
-        <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 px-5 py-5 flex justify-between items-center">
-
+        {/* HEADER */}
+        <div className="flex items-center justify-between bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 px-5 py-5">
           <div className="flex items-center gap-4">
-
-            <div className="bg-white/20 p-3 rounded-2xl">
-              <FaRobot className="text-white text-3xl" />
+            <div className="rounded-2xl bg-white/20 p-3">
+              <FaRobot className="text-3xl text-white" />
             </div>
 
             <div>
               <h2 className="text-2xl font-bold text-white">
                 AI Study Assistant
               </h2>
-
-              <p className="text-white/80 text-sm">
+              <p className="text-sm text-white/80">
                 Powered by Gemini AI
               </p>
             </div>
-
           </div>
 
           <button
             onClick={closeModal}
             aria-label="Close AI assistant"
-            className="text-white text-2xl hover:rotate-90 transition"
+            className="text-2xl text-white transition hover:rotate-90"
           >
             <FaTimes />
           </button>
-
         </div>
 
-        {/* ======================================
-            MAIN CONTENT
-        ======================================= */}
-
+        {/* MAIN CONTENT */}
         <div className="flex-1 overflow-y-auto">
 
-          {/* ======================================
-              ERROR MESSAGE
-          ======================================= */}
+          {/* PAYMENT SUCCESS MESSAGE */}
+          {subscriptionSuccess && (
+            <div
+              role="status"
+              className="mx-6 mt-6 rounded-xl border border-green-300 bg-green-100 p-4 dark:border-green-700 dark:bg-green-950"
+            >
+              <p className="font-bold text-green-800 dark:text-green-200">
+                👑 Premium Activated Successfully!
+              </p>
+              <p className="mt-1 text-green-700 dark:text-green-300">
+                Ab aap AI features use kar sakte ho. Neeche se koi
+                feature select karein.
+              </p>
+            </div>
+          )}
 
+          {/* PREMIUM STATUS */}
+          {premiumActive && (
+            <div className="mx-6 mt-4 flex items-center gap-2 rounded-xl border border-green-300 bg-green-50 p-3 font-semibold text-green-700 dark:border-green-700 dark:bg-green-950 dark:text-green-200">
+              <FaCrown />
+              Premium Active
+            </div>
+          )}
+
+          {/* ERROR MESSAGE */}
           {error && (
             <div
               role="alert"
               className={`mx-6 mt-6 rounded-xl border p-4 ${
                 upgradeRequired
-                  ? "bg-amber-100 dark:bg-amber-950 border-amber-300 dark:border-amber-700"
-                  : "bg-red-100 dark:bg-red-950 border-red-300 dark:border-red-700"
+                  ? "border-amber-300 bg-amber-100 dark:border-amber-700 dark:bg-amber-950"
+                  : "border-red-300 bg-red-100 dark:border-red-700 dark:bg-red-950"
               }`}
             >
-
               <p
                 className={
                   upgradeRequired
@@ -266,71 +243,59 @@ function AIAssistant({ text, closeModal }) {
                 {error}
               </p>
 
-              {/* Upgrade Button */}
-
               {upgradeRequired && (
-                <button
-                  type="button"
-                  onClick={handleUpgrade}
-                  className="mt-4 bg-amber-500 hover:bg-amber-600 text-white font-semibold px-5 py-2 rounded-xl flex items-center gap-2"
-                >
-                  <FaCrown />
-                  Upgrade to Premium
-                </button>
+                premiumActive ? (
+                  <div className="mt-4 inline-flex items-center gap-2 rounded-xl bg-green-600 px-5 py-2 font-semibold text-white">
+                    <FaCrown />
+                    Premium Active
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleUpgrade}
+                    className="mt-4 flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2 font-semibold text-white hover:bg-amber-600"
+                  >
+                    <FaCrown />
+                    Upgrade to Premium
+                  </button>
+                )
               )}
-
             </div>
           )}
 
-          {/* ======================================
-              FEATURE SELECTION
-          ======================================= */}
-
+          {/* FEATURE SELECTION */}
           {!selectedAction ? (
             <div className="p-6 lg:p-8">
-
-              <h2 className="text-2xl font-bold dark:text-white mb-8 text-center">
+              <h2 className="mb-8 text-center text-2xl font-bold dark:text-white">
                 Choose an AI Feature
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                 {actions.map((item) => (
                   <button
                     key={item.key}
                     onClick={() => runAI(item.key)}
                     disabled={loading}
-                    className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all disabled:opacity-50"
+                    className="rounded-2xl border border-gray-200 bg-white p-6 transition-all hover:-translate-y-1 hover:shadow-xl disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800"
                   >
-
                     <h3 className="text-xl font-bold dark:text-white">
                       {item.title}
                     </h3>
-
                     <p className="mt-3 text-gray-500 dark:text-gray-400">
                       {item.desc}
                     </p>
-
                   </button>
                 ))}
-
               </div>
-
             </div>
           ) : (
-
-            /* ======================================
-               AI RESULT
-            ======================================= */
-
+            /* AI RESULT */
             <div className="p-6 lg:p-8">
-
-              <div className="flex justify-between items-center mb-8">
-
+              <div className="mb-8 flex items-center justify-between">
                 <button
                   onClick={resetAssistant}
                   disabled={loading}
-                  className="flex items-center gap-2 text-blue-600 font-semibold hover:underline disabled:opacity-50"
+                  className="flex items-center gap-2 font-semibold text-blue-600 hover:underline disabled:opacity-50"
                 >
                   <FaArrowLeft />
                   Back
@@ -339,67 +304,49 @@ function AIAssistant({ text, closeModal }) {
                 {!loading && result && (
                   <button
                     onClick={copy}
-                    className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-xl flex items-center gap-2"
+                    className="flex items-center gap-2 rounded-xl bg-green-600 px-5 py-2 text-white hover:bg-green-700"
                   >
                     <FaCopy />
                     Copy
                   </button>
                 )}
-
               </div>
 
-              {/* Loading */}
-
               {loading ? (
-                <div className="flex flex-col justify-center items-center py-24">
-
-                  <div className="w-16 h-16 rounded-full border-4 border-purple-600 border-t-transparent animate-spin" />
-
-                  <h2 className="text-2xl font-bold mt-8 dark:text-white">
+                <div className="flex flex-col items-center justify-center py-24">
+                  <div className="h-16 w-16 animate-spin rounded-full border-4 border-purple-600 border-t-transparent" />
+                  <h2 className="mt-8 text-2xl font-bold dark:text-white">
                     🤖 AI is Generating...
                   </h2>
-
-                  <p className="text-gray-500 mt-3 text-center">
+                  <p className="mt-3 text-center text-gray-500">
                     Generating your response. Please wait.
                   </p>
-
                 </div>
               ) : result ? (
-
                 <>
                   {selectedAction === "summary" && (
                     <SummaryView data={result} />
                   )}
-
                   {selectedAction === "interview" && (
                     <InterviewView data={result} />
                   )}
-
                   {selectedAction === "mcq" && (
                     <MCQView data={result} />
                   )}
                 </>
-
               ) : null}
-
             </div>
           )}
-
         </div>
-
       </div>
 
-      {/* ==========================================
-          SUBSCRIPTION MODAL
-          Separate Component
-      =========================================== */}
-
+      {/* SUBSCRIPTION MODAL */}
       {showSubscription && (
         <SubscriptionModal
           closeModal={() => setShowSubscription(false)}
+          onSuccess={handleSubscriptionSuccess}
         />
       )}
-
     </div>
   );
 }

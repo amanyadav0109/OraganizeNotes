@@ -1,8 +1,9 @@
+
 import { useState } from "react";
 import axios from "axios";
 import { FaTimes, FaCrown, FaCheck } from "react-icons/fa";
 
-function SubscriptionModal({ closeModal }) {
+function SubscriptionModal({ closeModal, onSuccess }) {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -39,11 +40,7 @@ function SubscriptionModal({ closeModal }) {
 
       const payload = response.data;
 
-      if (
-        !payload.success ||
-        !payload.key ||
-        !payload.order?.id
-      ) {
+      if (!payload.success || !payload.key || !payload.order?.id) {
         throw new Error(
           payload.message || "Could not create payment order."
         );
@@ -88,7 +85,12 @@ function SubscriptionModal({ closeModal }) {
             );
 
             if (verifyResponse.data.success) {
-              alert("Premium activated successfully!");
+              // Notify AIAssistant that payment was verified
+              if (typeof onSuccess === "function") {
+                onSuccess();
+              }
+
+              // Close subscription popup and return to AI Assistant
               closeModal();
             } else {
               setMessage(
@@ -104,7 +106,7 @@ function SubscriptionModal({ closeModal }) {
 
             setMessage(
               error.response?.data?.message ||
-                "Payment verification failed. Please contact support if money was deducted."
+                "Payment verification failed. If money was deducted, please contact support."
             );
           } finally {
             setPaymentLoading(false);
@@ -134,6 +136,7 @@ function SubscriptionModal({ closeModal }) {
           paymentError.error?.description ||
             "Payment failed. Please try again."
         );
+
         setPaymentLoading(false);
       });
 
@@ -155,7 +158,7 @@ function SubscriptionModal({ closeModal }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
       <div className="relative w-full max-w-md rounded-3xl bg-white p-7 shadow-2xl dark:bg-slate-900">
         <button
           type="button"
@@ -183,6 +186,7 @@ function SubscriptionModal({ closeModal }) {
             <h3 className="text-lg font-bold dark:text-white">
               Premium Plan
             </h3>
+
             <span className="rounded-full bg-purple-200 px-3 py-1 text-xs font-bold text-purple-800 dark:bg-purple-900 dark:text-purple-200">
               30 DAYS
             </span>
@@ -218,7 +222,7 @@ function SubscriptionModal({ closeModal }) {
         {message && (
           <div
             role="alert"
-            className="mt-4 rounded-xl bg-red-100 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300"
+            className="mt-4 rounded-xl border border-red-200 bg-red-100 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300"
           >
             {message}
           </div>
