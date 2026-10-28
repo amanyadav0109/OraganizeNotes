@@ -109,7 +109,9 @@ export const generateAI = async (req, res) => {
     const isPremium =
       String(user.plan ?? "free").toLowerCase() === "premium";
 
-    const type = String(req.body?.type ?? "").toLowerCase();
+   const type = String(
+  req.body?.type ?? req.body?.action ?? req.body?.mode ?? ""
+).toLowerCase();
 console.log("AI REQUEST BODY:", JSON.stringify(req.body));
 console.log("AI REQUEST TYPE:", req.body?.type);
     // Support common content field names.
