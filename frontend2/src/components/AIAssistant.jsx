@@ -1,6 +1,13 @@
 
+
 import { useState } from "react";
-import { FaRobot, FaTimes, FaArrowLeft, FaCopy, FaCrown } from "react-icons/fa";
+import {
+  FaRobot,
+  FaTimes,
+  FaArrowLeft,
+  FaCopy,
+  FaCrown,
+} from "react-icons/fa";
 
 import { generateAI } from "../services/aiService";
 
@@ -10,7 +17,7 @@ import MCQView from "./MCQView";
 
 function AIAssistant({ text, closeModal }) {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState("");
+  const [result, setResult] = useState(null);
   const [selectedAction, setSelectedAction] = useState("");
   const [error, setError] = useState("");
   const [upgradeRequired, setUpgradeRequired] = useState(false);
@@ -34,47 +41,85 @@ function AIAssistant({ text, closeModal }) {
   ];
 
   const runAI = async (action) => {
-    if (!text || !text.trim()) {
+    if (typeof text !== "string" || !text.trim()) {
       setError("This note is empty. Please add some content first.");
       return;
     }
 
     setLoading(true);
     setSelectedAction(action);
-    setResult("");
+    setResult(null);
     setError("");
     setUpgradeRequired(false);
 
     try {
-      const data = await generateAI(action, text);
+      // aiService.js must return the complete res.data object.
+      const payload = await generateAI(action, text);
 
-      // Support either a parsed response or a JSON string.
-      const output = data?.output ?? data;
+      if (!payload || typeof payload !== "object") {
+        throw new Error("Invalid response received from the AI server.");
+      }
 
-      setResult(
-        typeof output === "string"
-          ? output
-          : JSON.stringify(output)
-      );
+      if (payload.success === false) {
+        const apiError = new Error(
+          payload.message || "AI generation failed."
+        );
+
+        apiError.upgradeRequired = payload.upgradeRequired;
+        throw apiError;
+      }
+
+      const output =
+        payload.result ??
+        payload.output ??
+        payload.data;
+
+      if (
+        output == null ||
+        (typeof output !== "object" && typeof output !== "string")
+      ) {
+        throw new Error("The AI server returned no generated content.");
+      }
+
+      let parsedOutput = output;
+
+      if (typeof output === "string") {
+        try {
+          parsedOutput = JSON.parse(output);
+        } catch {
+          throw new Error("The AI response is not valid JSON.");
+        }
+      }
+
+      setResult(parsedOutput);
     } catch (err) {
-      const response = err.response?.data;
+      console.error("AI ASSISTANT ERROR:", err);
 
-      if (response?.upgradeRequired) {
+      const response = err.response?.data;
+      const status = err.response?.status;
+
+      if (response?.upgradeRequired || err.upgradeRequired) {
         setUpgradeRequired(true);
         setError(
-          response.message ||
+          response?.message ||
+            err.message ||
             "You have used all 5 free AI generations for today."
         );
-      } else if (err.response?.status === 429) {
+      } else if (status === 429) {
         setError(
           response?.message ||
-            "Google AI is temporarily rate-limited. Please try again later."
+            "Gemini API quota exceeded. Please try again later."
+        );
+      } else if (status === 502 || status === 503) {
+        setError(
+          response?.message ||
+            "The AI service failed or is busy. Please try again."
         );
       } else {
         setError(
           response?.message ||
             err.message ||
-            "AI couldn't generate a response."
+            "AI could not generate a response."
         );
       }
     } finally {
@@ -87,33 +132,30 @@ function AIAssistant({ text, closeModal }) {
 
     try {
       await navigator.clipboard.writeText(
-        JSON.stringify(JSON.parse(result), null, 2)
+        JSON.stringify(result, null, 2)
       );
       alert("Copied successfully!");
     } catch {
-      alert("Unable to copy the response.");
+      setError("Unable to copy. Please copy the response manually.");
     }
   };
 
-  let aiData = null;
+  const resetAssistant = () => {
+    setSelectedAction("");
+    setResult(null);
+    setError("");
+    setUpgradeRequired(false);
+  };
 
-  try {
-    aiData = result ? JSON.parse(result) : null;
-  } catch {
-    aiData = null;
-  }
-
-  // Connect this button to your actual premium checkout page.
   const handleUpgrade = () => {
     setError(
-      "Premium checkout is not connected yet. Please add your subscription/payment flow."
+      "Premium checkout is not connected yet. Payment verification must be implemented first."
     );
   };
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex justify-center items-center z-50 p-4">
       <div className="bg-white dark:bg-slate-900 w-full max-w-sm sm:max-w-2xl lg:max-w-5xl xl:max-w-6xl h-[95vh] sm:h-[90vh] rounded-2xl lg:rounded-3xl shadow-2xl overflow-hidden border border-gray-200 dark:border-slate-700 flex flex-col">
-        {/* Header */}
         <div className="bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 px-5 py-5 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <div className="bg-white/20 p-3 rounded-2xl">
@@ -139,10 +181,10 @@ function AIAssistant({ text, closeModal }) {
           </button>
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto">
           {error && (
             <div
+              role="alert"
               className={`mx-6 mt-6 rounded-xl border p-4 ${
                 upgradeRequired
                   ? "bg-amber-100 dark:bg-amber-950 border-amber-300 dark:border-amber-700"
@@ -189,7 +231,6 @@ function AIAssistant({ text, closeModal }) {
                     <h3 className="text-xl font-bold dark:text-white">
                       {item.title}
                     </h3>
-
                     <p className="mt-3 text-gray-500 dark:text-gray-400">
                       {item.desc}
                     </p>
@@ -201,13 +242,9 @@ function AIAssistant({ text, closeModal }) {
             <div className="p-6 lg:p-8">
               <div className="flex justify-between items-center mb-8">
                 <button
-                  onClick={() => {
-                    setSelectedAction("");
-                    setResult("");
-                    setError("");
-                    setUpgradeRequired(false);
-                  }}
-                  className="flex items-center gap-2 text-blue-600 font-semibold hover:underline"
+                  onClick={resetAssistant}
+                  disabled={loading}
+                  className="flex items-center gap-2 text-blue-600 font-semibold hover:underline disabled:opacity-50"
                 >
                   <FaArrowLeft />
                   Back
@@ -232,37 +269,25 @@ function AIAssistant({ text, closeModal }) {
                     🤖 AI is Generating...
                   </h2>
 
-                  <p className="text-gray-500 mt-3">
-                    Please wait...
+                  <p className="text-gray-500 mt-3 text-center">
+                    Generating your response. Please wait.
                   </p>
                 </div>
-              ) : (
+              ) : result ? (
                 <>
-                  {selectedAction === "summary" && aiData && (
-                    <SummaryView data={aiData} />
+                  {selectedAction === "summary" && (
+                    <SummaryView data={result} />
                   )}
 
-                  {selectedAction === "interview" && aiData && (
-                    <InterviewView data={aiData} />
+                  {selectedAction === "interview" && (
+                    <InterviewView data={result} />
                   )}
 
-                  {selectedAction === "mcq" && aiData && (
-                    <MCQView data={aiData} />
-                  )}
-
-                  {!aiData && result && (
-                    <div className="bg-red-100 dark:bg-red-900 rounded-2xl p-6">
-                      <h2 className="text-xl font-bold text-red-600 mb-4">
-                        Invalid AI Response
-                      </h2>
-
-                      <pre className="whitespace-pre-wrap dark:text-white">
-                        {result}
-                      </pre>
-                    </div>
+                  {selectedAction === "mcq" && (
+                    <MCQView data={result} />
                   )}
                 </>
-              )}
+              ) : null}
             </div>
           )}
         </div>

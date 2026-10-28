@@ -1,10 +1,10 @@
 
-
 import { GoogleGenAI } from "@google/genai";
 import db from "../config/db.js";
 
 const DAILY_FREE_LIMIT = 5;
-const MODEL_NAME = "gemini-3.8-flash";
+const MODEL_NAME = "gemini-3.5-flash-lite";
+const AI_TIMEOUT_MS = 45000;
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -23,12 +23,15 @@ function parseAIResponse(text) {
   }
 
   const cleaned = text
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
+    .replace(/^```(?:json)?\s*/i, "")
     .replace(/\s*```$/, "")
     .trim();
 
-  return JSON.parse(cleaned);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    throw new Error("Gemini returned invalid JSON.");
+  }
 }
 
 function buildPrompt(type, content) {
@@ -40,9 +43,21 @@ function buildPrompt(type, content) {
 
   if (type === "summary") {
     return `
-Summarize the following notes clearly.
-Return ONLY valid JSON in this format:
-{"summary":"Your summary here"}
+Summarize these notes into clear, concise revision points.
+Return ONLY valid JSON:
+{
+  "title": "Summary",
+  "summary": "A concise summary of the notes",
+  "points": [
+    {
+      "heading": "Key concept",
+      "description": "Explanation of the concept"
+    }
+  ]
+}
+
+Use 3 to 7 useful points when the notes support them.
+Do not invent facts.
 
 Notes:
 ${text}
@@ -51,11 +66,19 @@ ${text}
 
   if (type === "interview") {
     return `
-Create interview questions and answers from these notes.
-Return ONLY valid JSON in this format:
-{"questions":[{"question":"Question","answer":"Answer"}]}
+Create 5 useful interview questions and answers based on these notes.
+Return ONLY valid JSON:
+{
+  "title": "Interview Questions",
+  "questions": [
+    {
+      "question": "Question text",
+      "answer": "Clear suggested answer"
+    }
+  ]
+}
 
-Create 5 useful questions.
+Do not invent facts not supported by the notes.
 
 Notes:
 ${text}
@@ -65,10 +88,31 @@ ${text}
   if (type === "mcq") {
     return `
 Create 5 multiple-choice questions from these notes.
-Return ONLY valid JSON in this format:
-{"questions":[{"question":"Question","options":["A","B","C","D"],"answer":"Correct option","explanation":"Short explanation"}]}
+Return ONLY valid JSON:
+{
+  "title": "MCQ Test",
+  "questions": [
+    {
+      "question": "Question text",
+      "options": [
+        "First option",
+        "Second option",
+        "Third option",
+        "Fourth option"
+      ],
+      "answer": "Second option",
+      "explanation": "Short explanation"
+    }
+  ]
+}
 
-Ensure every question has exactly four options.
+Rules:
+- Each question must have exactly four distinct options.
+- The answer must exactly match one option's full text.
+- Do not use a letter or number as the answer.
+- Make exactly one option correct per question.
+- Do not invent facts not supported by the notes.
+- Return valid JSON only.
 
 Notes:
 ${text}
@@ -76,6 +120,22 @@ ${text}
   }
 
   throw new Error("Invalid AI generation type.");
+}
+
+function withTimeout(promise, timeoutMs) {
+  let timer;
+
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      const error = new Error("AI request timed out. Please try again.");
+      error.code = "AI_TIMEOUT";
+      reject(error);
+    }, timeoutMs);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => {
+    clearTimeout(timer);
+  });
 }
 
 export const generateAI = async (req, res) => {
@@ -90,18 +150,43 @@ export const generateAI = async (req, res) => {
     return sendError(res, 500, "AI service is not configured.");
   }
 
-  let reservedUsage = false;
+  let connection;
+  let transactionStarted = false;
 
   try {
-    const [users] = await db.promise().execute(
+    const type = String(
+      req.body?.type ?? req.body?.action ?? req.body?.mode ?? ""
+    )
+      .trim()
+      .toLowerCase();
+
+    const content =
+      req.body?.content ??
+      req.body?.text ??
+      req.body?.notes ??
+      req.body?.noteContent;
+
+    // Validate before starting a database transaction.
+    const prompt = buildPrompt(type, content);
+
+    // Use a dedicated connection so concurrent requests for the same
+    // user cannot reserve or roll back each other's daily usage.
+    connection = await db.promise().getConnection();
+    await connection.beginTransaction();
+    transactionStarted = true;
+
+    const [users] = await connection.execute(
       `SELECT id, plan, ai_usage_count, ai_usage_date
        FROM users
        WHERE id = ?
-       LIMIT 1`,
+       LIMIT 1
+       FOR UPDATE`,
       [userId]
     );
 
     if (!users.length) {
+      await connection.rollback();
+      transactionStarted = false;
       return sendError(res, 404, "User not found.");
     }
 
@@ -109,70 +194,35 @@ export const generateAI = async (req, res) => {
     const isPremium =
       String(user.plan ?? "free").toLowerCase() === "premium";
 
-   const type = String(
-  req.body?.type ?? req.body?.action ?? req.body?.mode ?? ""
-).toLowerCase();
-console.log("AI REQUEST BODY:", JSON.stringify(req.body));
-console.log("AI REQUEST TYPE:", req.body?.type);
-    // Support common content field names.
-    const content =
-      req.body?.content ??
-      req.body?.text ??
-      req.body?.notes ??
-      req.body?.noteContent;
+    const [usageRows] = await connection.execute(
+      `SELECT
+         CASE
+           WHEN ai_usage_date = UTC_DATE()
+             THEN ai_usage_count
+           ELSE 0
+         END AS used
+       FROM users
+       WHERE id = ?
+       LIMIT 1`,
+      [userId]
+    );
 
-    const prompt = buildPrompt(type, content);
+    const used = Number(usageRows[0]?.used ?? 0);
 
-    // Reserve one daily usage atomically for free users.
-    // Premium users bypass this limit.
-    if (!isPremium) {
-      const [update] = await db.promise().execute(
-        `UPDATE users
-         SET ai_usage_count =
-               CASE
-                 WHEN ai_usage_date = UTC_DATE()
-                   THEN ai_usage_count + 1
-                 ELSE 1
-               END,
-             ai_usage_date = UTC_DATE()
-         WHERE id = ?
-           AND (
-             ai_usage_date IS NULL
-             OR ai_usage_date <> UTC_DATE()
-             OR ai_usage_count < ?
-           )`,
-        [userId, DAILY_FREE_LIMIT]
+    if (!isPremium && used >= DAILY_FREE_LIMIT) {
+      await connection.rollback();
+      transactionStarted = false;
+
+      return sendError(
+        res,
+        403,
+        "Daily free AI limit reached. Upgrade to Premium to continue.",
+        {
+          upgradeRequired: true,
+          used,
+          limit: DAILY_FREE_LIMIT,
+        }
       );
-
-      if (update.affectedRows !== 1) {
-        const [latest] = await db.promise().execute(
-          `SELECT ai_usage_count, ai_usage_date
-           FROM users
-           WHERE id = ?
-           LIMIT 1`,
-          [userId]
-        );
-
-        const used =
-          latest[0]?.ai_usage_date &&
-          String(latest[0].ai_usage_date).slice(0, 10) ===
-            new Date().toISOString().slice(0, 10)
-            ? Number(latest[0].ai_usage_count)
-            : 0;
-
-        return sendError(
-          res,
-          403,
-          "Daily free AI limit reached. Upgrade to Premium to continue.",
-          {
-            upgradeRequired: true,
-            used,
-            limit: DAILY_FREE_LIMIT,
-          }
-        );
-      }
-
-      reservedUsage = true;
     }
 
     console.time("GEMINI_API_TIME");
@@ -180,44 +230,49 @@ console.log("AI REQUEST TYPE:", req.body?.type);
     let response;
 
     try {
-      response = await ai.models.generateContent({
-        model: MODEL_NAME,
-        contents: prompt,
-        config: {
-          temperature: 0.3,
-          maxOutputTokens: 1200,
-          responseMimeType: "application/json",
-        },
-      });
+      response = await withTimeout(
+        ai.models.generateContent({
+          model: MODEL_NAME,
+          contents: prompt,
+          config: {
+            temperature: 0.3,
+            maxOutputTokens: 1200,
+            responseMimeType: "application/json",
+          },
+        }),
+        AI_TIMEOUT_MS
+      );
     } finally {
       console.timeEnd("GEMINI_API_TIME");
     }
 
     const result = parseAIResponse(response.text);
 
-    // Successful generation: keep the reserved usage.
-    reservedUsage = false;
-
-    let usage = null;
+    // Count only a successfully generated and parsed response.
+    let newUsage = used;
 
     if (!isPremium) {
-      const [rows] = await db.promise().execute(
-        `SELECT ai_usage_count
-         FROM users
-         WHERE id = ?
-         LIMIT 1`,
-        [userId]
-      );
+      newUsage = used + 1;
 
-      usage = {
-        used: Number(rows[0]?.ai_usage_count ?? 0),
-        limit: DAILY_FREE_LIMIT,
-        remaining: Math.max(
-          0,
-          DAILY_FREE_LIMIT - Number(rows[0]?.ai_usage_count ?? 0)
-        ),
-      };
+      await connection.execute(
+        `UPDATE users
+         SET ai_usage_count = ?,
+             ai_usage_date = UTC_DATE()
+         WHERE id = ?`,
+        [newUsage, userId]
+      );
     }
+
+    await connection.commit();
+    transactionStarted = false;
+
+    const usage = isPremium
+      ? null
+      : {
+          used: newUsage,
+          limit: DAILY_FREE_LIMIT,
+          remaining: Math.max(0, DAILY_FREE_LIMIT - newUsage),
+        };
 
     return res.status(200).json({
       success: true,
@@ -226,33 +281,34 @@ console.log("AI REQUEST TYPE:", req.body?.type);
       usage,
     });
   } catch (error) {
+    if (transactionStarted && connection) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        console.error("AI TRANSACTION ROLLBACK ERROR:", rollbackError.message);
+      }
+      transactionStarted = false;
+    }
+
     console.error("AI GENERATION ERROR:", error.message);
     console.error("AI ERROR STATUS:", error.status ?? "unknown");
 
-    // Failed generation must not consume the reserved free usage.
-    if (reservedUsage) {
-      try {
-        await db.promise().execute(
-          `UPDATE users
-           SET ai_usage_count = GREATEST(ai_usage_count - 1, 0)
-           WHERE id = ?
-             AND ai_usage_date = UTC_DATE()`,
-          [userId]
-        );
-      } catch (rollbackError) {
-        console.error(
-          "AI USAGE ROLLBACK ERROR:",
-          rollbackError.message
-        );
-      }
+    if (error.code === "AI_TIMEOUT") {
+      return sendError(
+        res,
+        504,
+        "AI took too long to respond. Please try again."
+      );
     }
 
-    const message = String(error.message ?? "");
+    const message = String(error.message ?? "").toLowerCase();
+    const status = Number(error.status ?? error.statusCode ?? 0);
 
     if (
-      error.status === 429 ||
+      status === 429 ||
       message.includes("429") ||
-      message.toLowerCase().includes("quota")
+      message.includes("quota") ||
+      message.includes("resource_exhausted")
     ) {
       return sendError(
         res,
@@ -262,9 +318,9 @@ console.log("AI REQUEST TYPE:", req.body?.type);
     }
 
     if (
-      error.status === 503 ||
+      status === 503 ||
       message.includes("503") ||
-      message.toLowerCase().includes("overloaded")
+      message.includes("overloaded")
     ) {
       return sendError(
         res,
@@ -277,11 +333,19 @@ console.log("AI REQUEST TYPE:", req.body?.type);
       res,
       502,
       "AI generation failed. Please try again.",
-      { detail: message }
+      {
+        detail:
+          process.env.NODE_ENV === "production"
+            ? undefined
+            : error.message,
+      }
     );
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 };
 
-// Aliases in case your existing route imports another handler name.
 export const generateAi = generateAI;
 export const generateAIContent = generateAI;

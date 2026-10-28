@@ -1,32 +1,59 @@
-import { useState } from "react";
+
+import { useEffect, useMemo, useState } from "react";
 
 function MCQView({ data }) {
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
 
-  if (!data) return null;
+  const questions = useMemo(
+    () => (Array.isArray(data?.questions) ? data.questions : []),
+    [data]
+  );
 
-  const questions = Array.isArray(data.questions)
-    ? data.questions
-    : [];
+  useEffect(() => {
+    setAnswers({});
+    setSubmitted(false);
+  }, [data]);
 
-  const score = questions.reduce((total, q, index) => {
-    return answers[index] === q.answer ? total + 1 : total;
-  }, 0);
+  const getCorrectIndex = (mcq) => {
+    if (!Array.isArray(mcq?.options)) return -1;
 
-  const handleOptionClick = (questionIndex, optionIndex) => {
-    if (submitted) return;
+    const answer = mcq.answer;
 
-    setAnswers({
-      ...answers,
-      [questionIndex]: optionIndex,
-    });
+    if (typeof answer === "number" && Number.isInteger(answer)) {
+      if (answer >= 0 && answer < mcq.options.length) return answer;
+      if (answer >= 1 && answer <= mcq.options.length) return answer - 1;
+    }
+
+    if (typeof answer !== "string") return -1;
+
+    const normalized = answer.trim();
+    const letterMatch = normalized.match(/^([A-D])(?:[.)])?$/i);
+
+    if (letterMatch) {
+      const index = letterMatch[1].toUpperCase().charCodeAt(0) - 65;
+      if (index < mcq.options.length) return index;
+    }
+
+    return mcq.options.findIndex(
+      (option) =>
+        typeof option === "string" &&
+        option.trim().toLowerCase() === normalized.toLowerCase()
+    );
   };
+
+  const score = questions.reduce((total, mcq, index) => {
+    return answers[index] === getCorrectIndex(mcq) && getCorrectIndex(mcq) !== -1
+      ? total + 1
+      : total;
+  }, 0);
 
   const resetQuiz = () => {
     setAnswers({});
     setSubmitted(false);
   };
+
+  if (!data) return null;
 
   return (
     <div>
@@ -39,79 +66,90 @@ function MCQView({ data }) {
           <h2 className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
             No MCQs Available
           </h2>
-
           <p className="mt-3 text-yellow-700 dark:text-yellow-200">
-            There wasn't enough information in your notes to generate MCQs.
+            No questions were generated. Try again with more detailed notes.
           </p>
         </div>
       ) : (
         <>
           <div className="space-y-8">
-            {questions.map((mcq, index) => (
-              <div
-                key={index}
-                className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-6 shadow-md"
-              >
-                <h3 className="text-lg font-bold text-purple-600 dark:text-purple-400 mb-5">
-                  Q{index + 1}. {mcq.question}
-                </h3>
+            {questions.map((mcq, index) => {
+              const options = Array.isArray(mcq?.options) ? mcq.options : [];
+              const correctIndex = getCorrectIndex(mcq);
 
-                <div className="space-y-3">
-                  {(mcq.options || []).map((option, i) => {
-                    const selected = answers[index] === i;
-                    const correct = mcq.answer === i;
+              return (
+                <div
+                  key={index}
+                  className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl p-6 shadow-md"
+                >
+                  <h3 className="text-lg font-bold text-purple-600 dark:text-purple-400 mb-5">
+                    Q{index + 1}. {mcq?.question || "Question not available"}
+                  </h3>
 
-                    let classes =
-                      "border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600";
+                  <div className="space-y-3">
+                    {options.map((option, i) => {
+                      const selected = answers[index] === i;
+                      const correct = correctIndex === i;
 
-                    if (submitted) {
-                      if (correct) {
-                        classes =
-                          "border-green-500 bg-green-100 dark:bg-green-900";
-                      } else if (selected && !correct) {
-                        classes =
-                          "border-red-500 bg-red-100 dark:bg-red-900";
+                      let classes =
+                        "border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600";
+
+                      if (submitted && correct) {
+                        classes = "border-green-500 bg-green-100 dark:bg-green-900";
+                      } else if (submitted && selected) {
+                        classes = "border-red-500 bg-red-100 dark:bg-red-900";
+                      } else if (!submitted && selected) {
+                        classes = "border-blue-500 bg-blue-100 dark:bg-blue-900";
                       }
-                    } else if (selected) {
-                      classes =
-                        "border-blue-500 bg-blue-100 dark:bg-blue-900";
-                    }
 
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => handleOptionClick(index, i)}
-                        className={`w-full text-left rounded-xl border p-4 transition ${classes}`}
-                      >
-                        <strong>
-                          {String.fromCharCode(65 + i)}.
-                        </strong>{" "}
-                        {option}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {submitted && mcq.explanation && (
-                  <div className="mt-5 bg-blue-50 dark:bg-slate-700 border border-blue-200 dark:border-slate-600 rounded-xl p-4">
-                    <h4 className="font-semibold text-blue-600 dark:text-blue-400">
-                      Explanation
-                    </h4>
-
-                    <p className="mt-2 text-gray-700 dark:text-gray-300">
-                      {mcq.explanation}
-                    </p>
+                      return (
+                        <button
+                          type="button"
+                          key={i}
+                          disabled={submitted}
+                          onClick={() =>
+                            setAnswers((previous) => ({
+                              ...previous,
+                              [index]: i,
+                            }))
+                          }
+                          className={`w-full text-left rounded-xl border p-4 transition ${classes} disabled:cursor-default`}
+                        >
+                          <strong>{String.fromCharCode(65 + i)}.</strong>{" "}
+                          {option}
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {submitted && correctIndex === -1 && (
+                    <p className="mt-4 text-amber-600 dark:text-amber-400">
+                      Correct answer could not be identified for this question.
+                    </p>
+                  )}
+
+                  {submitted && mcq?.explanation && (
+                    <div className="mt-5 bg-blue-50 dark:bg-slate-700 border border-blue-200 dark:border-slate-600 rounded-xl p-4">
+                      <h4 className="font-semibold text-blue-600 dark:text-blue-400">
+                        Explanation
+                      </h4>
+                      <p className="mt-2 text-gray-700 dark:text-gray-300">
+                        {mcq.explanation}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <div className="mt-10 flex justify-center">
             {!submitted ? (
               <button
+                type="button"
                 onClick={() => setSubmitted(true)}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-10 py-3 rounded-xl font-bold transition"
+                disabled={Object.keys(answers).length === 0}
+                className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-10 py-3 rounded-xl font-bold transition"
               >
                 Submit Quiz
               </button>
@@ -135,6 +173,7 @@ function MCQView({ data }) {
                   </p>
 
                   <button
+                    type="button"
                     onClick={resetQuiz}
                     className="mt-6 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold transition"
                   >
