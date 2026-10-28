@@ -19,6 +19,8 @@ import "./jobs/reminderJob.js";
 import cron from "node-cron";
 import { checkReminders } from "./services/reminderService.js";
 
+import subscriptionRoutes from "./routes/subscriptionRoutes.js";
+
 const app = express();
 
 app.use(
@@ -48,6 +50,9 @@ app.use(
   "/api/marketplace/download",
   marketplaceDownloadRoutes
 );
+
+app.use("/api/subscription", subscriptionRoutes);
+
 app.use(
   "/api/marketplace/payment",
   marketplacePaymentRoutes
