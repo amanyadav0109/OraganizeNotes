@@ -22,6 +22,10 @@ import EditMarketplaceNote from "./pages/EditMarketplaceNote";
 import ViewMarketplaceNote from "./pages/ViewMarketplaceNote";
 import AddNote from "./pages/AddNote";
 import EditNote from "./pages/EditNote";
+import Practice from "./pages/Practice";
+import MockTests from "./pages/MockTests";
+import Analytics from "./pages/Analytics";
+import RevisionPlan from "./pages/RevisionPlan";
 function App() {
   return (
     <Routes>
@@ -119,6 +123,41 @@ function App() {
        <Route
     path="/sell-notes"
     element={<SellNotes />}
+/>
+<Route
+  path="/practice"
+  element={
+    <ProtectedRoute>
+      <Practice />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/mock-tests"
+  element={
+    <ProtectedRoute>
+      <MockTests />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/analytics"
+  element={
+    <ProtectedRoute>
+      <Analytics />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/revision-plan"
+  element={
+    <ProtectedRoute>
+      <RevisionPlan />
+    </ProtectedRoute>
+  }
 />
     </Routes>
   );

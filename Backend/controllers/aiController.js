@@ -1,9 +1,8 @@
 
-
 import { GoogleGenAI } from "@google/genai";
 import db from "../config/db.js";
 
-const DAILY_FREE_LIMIT = 5;
+const DAILY_FREE_LIMIT = 10;
 const MODEL_NAME = "gemini-3.5-flash-lite";
 const AI_TIMEOUT_MS = 45000;
 
@@ -35,7 +34,7 @@ function parseAIResponse(text) {
   }
 }
 
-function buildPrompt(type, content) {
+function buildPrompt(type, content, questionCount = 5) {
   const text = String(content ?? "").trim();
 
   if (!text) {
@@ -45,6 +44,7 @@ function buildPrompt(type, content) {
   if (type === "summary") {
     return `
 Summarize these notes into clear, concise revision points.
+
 Return ONLY valid JSON:
 {
   "title": "Summary",
@@ -68,6 +68,7 @@ ${text}
   if (type === "interview") {
     return `
 Create 5 useful interview questions and answers based on these notes.
+
 Return ONLY valid JSON:
 {
   "title": "Interview Questions",
@@ -86,37 +87,73 @@ ${text}
 `;
   }
 
-  if (type === "mcq") {
+  // MCQ PRACTICE
+  if (type === "mcq" || type === "topic_mcq") {
     return `
-Create 5 multiple-choice questions from these notes.
+Create exactly ${questionCount} multiple-choice questions.
+
+Topic / Study Material:
+${text}
+
+Rules:
+- Generate exactly ${questionCount} questions.
+- Each question must have exactly four distinct options.
+- Exactly one option must be correct.
+- The answer must exactly match the full text of one option.
+- Do not use A, B, C or D as the answer.
+- Add a short educational explanation.
+- Avoid duplicate questions.
+- Keep questions relevant to the given topic/material.
+
 Return ONLY valid JSON:
+
 {
-  "title": "MCQ Test",
+  "title": "MCQ Practice",
   "questions": [
     {
       "question": "Question text",
       "options": [
-        "First option",
-        "Second option",
-        "Third option",
-        "Fourth option"
+        "Option 1",
+        "Option 2",
+        "Option 3",
+        "Option 4"
       ],
-      "answer": "Second option",
-      "explanation": "Short explanation"
+      "answer": "Correct option full text",
+      "explanation": "Why this answer is correct"
+    }
+  ]
+}
+`;
+  }
+
+  // NORMAL QUESTIONS
+  if (type === "questions" || type === "topic_questions") {
+    return `
+Create exactly ${questionCount} useful practice questions.
+
+Topic / Study Material:
+${text}
+
+Return ONLY valid JSON:
+
+{
+  "title": "Practice Questions",
+  "questions": [
+    {
+      "question": "Question text",
+      "answer": "Clear and accurate answer",
+      "explanation": "Short explanation that helps the student understand the concept"
     }
   ]
 }
 
 Rules:
-- Each question must have exactly four distinct options.
-- The answer must exactly match one option's full text.
-- Do not use a letter or number as the answer.
-- Make exactly one option correct per question.
-- Do not invent facts not supported by the notes.
-- Return valid JSON only.
-
-Notes:
-${text}
+- Generate exactly ${questionCount} questions.
+- Questions should test understanding, not just memorization.
+- Avoid duplicate questions.
+- Keep questions relevant to the given topic/material.
+- Answers should be clear and useful for students.
+- Do not invent information unrelated to the topic.
 `;
   }
 
@@ -167,8 +204,13 @@ export const generateAI = async (req, res) => {
       req.body?.notes ??
       req.body?.noteContent;
 
-    const prompt = buildPrompt(type, content);
+const requestedCount = Number(req.body?.questionCount ?? 5);
 
+const questionCount = [5, 10, 20].includes(requestedCount)
+  ? requestedCount
+  : 5;
+
+const prompt = buildPrompt(type, content, questionCount);
     connection = await db.promise().getConnection();
 
     await connection.beginTransaction();
@@ -256,7 +298,7 @@ export const generateAI = async (req, res) => {
           contents: prompt,
           config: {
             temperature: 0.3,
-            maxOutputTokens: 1200,
+            maxOutputTokens: 8192,
             responseMimeType: "application/json",
           },
         }),

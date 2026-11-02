@@ -18,7 +18,7 @@ import marketplaceRoutes from "./routes/marketplaceRoutes.js";
 import "./jobs/reminderJob.js";
 import cron from "node-cron";
 import { checkReminders } from "./services/reminderService.js";
-
+import practiceRoutes from "./routes/practiceRoutes.js";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 
 const app = express();
@@ -46,6 +46,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/marketplace", marketplaceRoutes);
+app.use("/api/practice", practiceRoutes);
 app.use(
   "/api/marketplace/download",
   marketplaceDownloadRoutes
