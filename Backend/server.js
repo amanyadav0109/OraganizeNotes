@@ -30,6 +30,7 @@ app.use(
   "http://localhost:5173",
   "http://localhost:5174",
   "https://oraganize-notes.vercel.app",
+  "https://organizenotes-admin.vercel.app"
 ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
