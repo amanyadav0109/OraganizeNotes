@@ -20,15 +20,17 @@ import cron from "node-cron";
 import { checkReminders } from "./services/reminderService.js";
 import practiceRoutes from "./routes/practiceRoutes.js";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
-
+import adminRoutes from "./routes/adminRoutes.js";
+import mockTestRoutes from "./routes/mockTestRoutes.js";
 const app = express();
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://oraganize-notes.vercel.app",
-    ],
+   origin: [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://oraganize-notes.vercel.app",
+],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -36,6 +38,7 @@ app.use(
 );
 
 app.use(express.json());
+
 app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
@@ -47,11 +50,12 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/marketplace", marketplaceRoutes);
 app.use("/api/practice", practiceRoutes);
+app.use("/api/admin", adminRoutes);
 app.use(
   "/api/marketplace/download",
   marketplaceDownloadRoutes
 );
-
+app.use("/api/mock-tests", mockTestRoutes);
 app.use("/api/subscription",subscriptionRoutes);
 
 app.use(

@@ -8,36 +8,59 @@ import {
   Send,
   CheckCircle2,
   Circle,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
 
-const fallbackQuestions = [
-  {
-    id: 1,
-    question: {
-      English: "Which of the following is a correct option?",
-      Hindi: "निम्नलिखित में से कौन सा सही विकल्प है?"
-    },
-    options: {
-      English: ["Option A", "Option B", "Option C", "Option D"],
-      Hindi: ["विकल्प A", "विकल्प B", "विकल्प C", "विकल्प D"]
-    },
-    answer: 0,
-    explanation: {
-      English: "This is a sample demo question.",
-      Hindi: "यह एक नमूना प्रश्न है।"
-    }
-  }
-];
+// Convert database questions into ExamScreen format
+const normalizeQuestions = (questions = []) => {
+  return questions.map((item) => {
+    const answerMap = {
+      A: 0,
+      B: 1,
+      C: 2,
+      D: 3,
+    };
+
+    return {
+      id: item.id,
+      question: {
+        English: item.question || "",
+        Hindi: item.question_hindi || item.question || "",
+      },
+      options: {
+        English: [
+          item.option_a || "",
+          item.option_b || "",
+          item.option_c || "",
+          item.option_d || "",
+        ],
+        Hindi: [
+          item.option_a_hindi || item.option_a || "",
+          item.option_b_hindi || item.option_b || "",
+          item.option_c_hindi || item.option_c || "",
+          item.option_d_hindi || item.option_d || "",
+        ],
+      },
+      answer:
+        typeof item.answer === "number"
+          ? item.answer
+          : answerMap[item.correct_answer] ?? 0,
+      explanation: {
+        English: item.explanation || "",
+        Hindi: item.explanation_hindi || item.explanation || "",
+      },
+      marks: Number(item.marks) || 1,
+    };
+  });
+};
 
 export default function ExamScreen({
   test,
-  questions,
+  questions = [],
   language,
-  onSubmit
+  onSubmit,
 }) {
-  const examQuestions =
-    questions?.length > 0 ? questions : fallbackQuestions;
+  const examQuestions = normalizeQuestions(questions);
 
   const duration = Math.max(
     1,
@@ -91,15 +114,17 @@ export default function ExamScreen({
   };
 
   const selectAnswer = (optionIndex) => {
-    if (submitted) return;
+    if (submitted || !currentQuestion) return;
 
     setAnswers((previous) => ({
       ...previous,
-      [currentQuestion.id]: optionIndex
+      [currentQuestion.id]: optionIndex,
     }));
   };
 
   const toggleMark = () => {
+    if (!currentQuestion) return;
+
     setMarked((previous) =>
       previous.includes(currentQuestion.id)
         ? previous.filter((id) => id !== currentQuestion.id)
@@ -111,17 +136,37 @@ export default function ExamScreen({
     if (submitted) return;
 
     setSubmitted(true);
+    setShowSubmitModal(false);
 
     let correct = 0;
+    let incorrect = 0;
 
     examQuestions.forEach((question) => {
+      if (answers[question.id] === undefined) return;
+
       if (answers[question.id] === question.answer) {
         correct++;
+      } else {
+        incorrect++;
       }
     });
 
-    const incorrect = answeredCount - correct;
     const unanswered = totalQuestions - answeredCount;
+
+    const totalMarks = examQuestions.reduce(
+      (sum, question) => sum + question.marks,
+      0
+    );
+
+    const obtainedMarks = examQuestions.reduce(
+      (sum, question) => {
+        if (answers[question.id] === question.answer) {
+          return sum + question.marks;
+        }
+        return sum;
+      },
+      0
+    );
 
     onSubmit({
       answers,
@@ -129,8 +174,10 @@ export default function ExamScreen({
       incorrect,
       unanswered,
       total: totalQuestions,
+      totalMarks,
+      obtainedMarks,
       questions: examQuestions,
-      language
+      language,
     });
   };
 
@@ -146,8 +193,35 @@ export default function ExamScreen({
     }
   };
 
+  // No fallback/demo questions
+  if (totalQuestions === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center dark:border-slate-700 dark:bg-slate-900">
+        <AlertCircle
+          size={40}
+          className="mx-auto text-orange-500"
+        />
+        <h3 className="mt-4 text-xl font-bold text-gray-900 dark:text-white">
+          No Questions Available
+        </h3>
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          No questions have been added to this test yet.
+        </p>
+      </div>
+    );
+  }
+
+  const questionText =
+    currentQuestion.question[language] ||
+    currentQuestion.question.English;
+
+  const currentOptions =
+    currentQuestion.options[language] ||
+    currentQuestion.options.English;
+
   return (
     <div className="mx-auto max-w-7xl space-y-5 pb-10">
+
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
         <div>
@@ -173,8 +247,10 @@ export default function ExamScreen({
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
-        {/* Question section */}
+
+        {/* Question Section */}
         <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900 sm:p-7">
+
           <div className="flex items-center justify-between gap-3">
             <span className="rounded-lg bg-blue-100 px-3 py-2 text-sm font-semibold text-blue-700">
               Question {currentIndex + 1} of {totalQuestions}
@@ -196,46 +272,44 @@ export default function ExamScreen({
           </div>
 
           <h3 className="mt-8 text-lg font-semibold leading-8 text-gray-900 dark:text-white">
-            {currentQuestion.question[language] ||
-              currentQuestion.question.English}
+            {questionText}
           </h3>
 
           <div className="mt-7 space-y-3">
-            {currentQuestion.options[language]?.map(
-              (option, index) => {
-                const selected =
-                  answers[currentQuestion.id] === index;
+            {currentOptions.map((option, index) => {
+              const selected =
+                answers[currentQuestion.id] === index;
 
-                return (
-                  <button
-                    key={index}
-                    onClick={() => selectAnswer(index)}
-                    className={`flex w-full items-center gap-3 rounded-xl border p-4 text-left transition ${
-                      selected
-                        ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"
-                        : "border-gray-200 text-gray-700 hover:border-blue-300 dark:border-slate-700 dark:text-gray-200"
-                    }`}
-                  >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-bold">
-                      {String.fromCharCode(65 + index)}
-                    </span>
+              return (
+                <button
+                  key={index}
+                  onClick={() => selectAnswer(index)}
+                  className={`flex w-full items-center gap-3 rounded-xl border p-4 text-left transition ${
+                    selected
+                      ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"
+                      : "border-gray-200 text-gray-700 hover:border-blue-300 dark:border-slate-700 dark:text-gray-200"
+                  }`}
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-bold">
+                    {String.fromCharCode(65 + index)}
+                  </span>
 
-                    <span>{option}</span>
+                  <span>{option}</span>
 
-                    {selected && (
-                      <CheckCircle2
-                        className="ml-auto"
-                        size={20}
-                      />
-                    )}
-                  </button>
-                );
-              }
-            )}
+                  {selected && (
+                    <CheckCircle2
+                      className="ml-auto"
+                      size={20}
+                    />
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {/* Navigation */}
           <div className="mt-10 flex flex-wrap justify-between gap-3 border-t border-gray-200 pt-5 dark:border-slate-700">
+
             <button
               onClick={() => goToQuestion(currentIndex - 1)}
               disabled={currentIndex === 0}
@@ -265,8 +339,9 @@ export default function ExamScreen({
           </div>
         </div>
 
-        {/* Question palette */}
+        {/* Question Palette */}
         <aside className="h-fit rounded-2xl border border-gray-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+
           <h3 className="font-bold text-gray-900 dark:text-white">
             Question Palette
           </h3>
@@ -296,6 +371,7 @@ export default function ExamScreen({
           </div>
 
           <div className="mt-6 space-y-3 border-t border-gray-200 pt-5 text-sm dark:border-slate-700">
+
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                 <Circle size={13} className="fill-green-500 text-green-500" />
@@ -331,10 +407,11 @@ export default function ExamScreen({
         </aside>
       </div>
 
-      {/* Submit confirmation */}
+      {/* Submit Confirmation */}
       {showSubmitModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
+
             <AlertCircle
               size={40}
               className="mx-auto text-orange-500"
@@ -371,4 +448,3 @@ export default function ExamScreen({
     </div>
   );
 }
-

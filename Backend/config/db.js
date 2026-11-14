@@ -19,7 +19,7 @@ const db = mysql.createPool({
     connectionLimit: 10,
     queueLimit: 0
 });
-
+export const promiseDb = db.promise();
 db.getConnection((err, connection) => {
     if (err) {
         console.log("Database connection failed:", err);

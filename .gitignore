@@ -6,6 +6,7 @@ node_modules/
 .env
 Backend/.env
 frontend2/.env
+AdminPannel/.env
 Backend/config/firebase-adminsdk.json
 # Build folders
 dist/

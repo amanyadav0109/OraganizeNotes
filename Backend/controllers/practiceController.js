@@ -12,8 +12,14 @@ export const getPracticeSubjects = async (req, res) => {
           COUNT(DISTINCT t.id) AS topicCount,
           COUNT(DISTINCT q.id) AS questionCount
        FROM practice_subjects s
-       LEFT JOIN practice_topics t ON t.subject_id = s.id
-       LEFT JOIN practice_questions q ON q.topic_id = t.id
+
+       LEFT JOIN practice_topics t
+          ON t.subject_id = s.id
+
+       LEFT JOIN practice_questions q
+          ON q.topic_id = t.id
+          AND q.type = 'descriptive'
+
        GROUP BY s.id
        ORDER BY s.name ASC`
     );
@@ -44,9 +50,15 @@ export const getPracticeTopics = async (req, res) => {
           t.name,
           t.description,
           COUNT(q.id) AS questionCount
+
        FROM practice_topics t
-       LEFT JOIN practice_questions q ON q.topic_id = t.id
+
+       LEFT JOIN practice_questions q
+          ON q.topic_id = t.id
+          AND q.type = 'descriptive'
+
        WHERE t.subject_id = ?
+
        GROUP BY t.id
        ORDER BY t.name ASC`,
       [subjectId]
@@ -66,7 +78,7 @@ export const getPracticeTopics = async (req, res) => {
 };
 
 
-// GET FILTERED PRACTICE QUESTIONS
+// GET FILTERED DESCRIPTIVE PRACTICE QUESTIONS
 export const getPracticeQuestions = async (req, res) => {
   try {
     const userId = req.userId;
@@ -83,13 +95,16 @@ export const getPracticeQuestions = async (req, res) => {
     } = req.query;
 
     const currentPage = Math.max(1, Number(page) || 1);
+
     const pageLimit = Math.min(
       100,
       Math.max(1, Number(limit) || 20)
     );
+
     const offset = (currentPage - 1) * pageLimit;
 
-    const conditions = [];
+    // Only descriptive questions
+    const conditions = ["q.type = 'descriptive'"];
     const values = [];
 
     if (subjectId) {
@@ -117,6 +132,7 @@ export const getPracticeQuestions = async (req, res) => {
         conditions.push(
           `q.topic_id IN (${topicIds.map(() => "?").join(",")})`
         );
+
         values.push(...topicIds);
       }
     }
@@ -133,7 +149,9 @@ export const getPracticeQuestions = async (req, res) => {
             AND pa.is_correct = 1
         )
       `;
+
       values.push(userId);
+
     } else if (status === "Unsolved") {
       statusCondition = `
         AND NOT EXISTS (
@@ -144,13 +162,11 @@ export const getPracticeQuestions = async (req, res) => {
             AND pa.is_correct = 1
         )
       `;
+
       values.push(userId);
     }
 
-    const whereClause =
-      conditions.length > 0
-        ? `WHERE ${conditions.join(" AND ")}`
-        : "";
+    const whereClause = `WHERE ${conditions.join(" AND ")}`;
 
     let orderBy = "q.created_at DESC";
 
@@ -163,6 +179,7 @@ export const getPracticeQuestions = async (req, res) => {
       orderBy = "attemptCount DESC, q.created_at DESC";
     }
 
+    // COUNT QUERY
     const countValues = [...values];
 
     const [countRows] = await db.promise().query(
@@ -175,6 +192,7 @@ export const getPracticeQuestions = async (req, res) => {
 
     const total = Number(countRows[0]?.total || 0);
 
+    // FETCH QUESTIONS
     const [questions] = await db.promise().query(
       `SELECT
           q.id,
@@ -224,8 +242,10 @@ export const getPracticeQuestions = async (req, res) => {
         hasNextPage: currentPage * pageLimit < total,
       },
     });
+
   } catch (error) {
     console.error("GET PRACTICE QUESTIONS:", error);
+
     res.status(500).json({
       success: false,
       message: "Failed to fetch practice questions.",
@@ -234,7 +254,11 @@ export const getPracticeQuestions = async (req, res) => {
 };
 
 
-// GET SINGLE QUESTION
+// GET SINGLE DESCRIPTIVE QUESTION
+
+// GET SINGLE DESCRIPTIVE QUESTION WITH ANSWER
+
+// GET SINGLE DESCRIPTIVE QUESTION WITH CORRECT ANSWER
 export const getPracticeQuestionById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -247,15 +271,19 @@ export const getPracticeQuestionById = async (req, res) => {
           t.name AS topic,
           q.question,
           q.type,
-          q.option_a AS optionA,
-          q.option_b AS optionB,
-          q.option_c AS optionC,
-          q.option_d AS optionD,
           q.difficulty,
+          q.correct_answer AS correctAnswer,
+          q.explanation,
           q.created_at AS createdAt
+
        FROM practice_questions q
-       LEFT JOIN practice_topics t ON t.id = q.topic_id
+
+       LEFT JOIN practice_topics t
+          ON t.id = q.topic_id
+
        WHERE q.id = ?
+         AND q.type = 'descriptive'
+
        LIMIT 1`,
       [id]
     );
@@ -271,8 +299,10 @@ export const getPracticeQuestionById = async (req, res) => {
       success: true,
       question: questions[0],
     });
+
   } catch (error) {
     console.error("GET SINGLE PRACTICE QUESTION:", error);
+
     res.status(500).json({
       success: false,
       message: "Failed to fetch question.",
@@ -281,7 +311,9 @@ export const getPracticeQuestionById = async (req, res) => {
 };
 
 
+
 // SUBMIT MCQ ANSWER
+// Existing MCQ functionality preserved
 export const submitPracticeAnswer = async (req, res) => {
   try {
     const userId = req.userId;
@@ -342,8 +374,10 @@ export const submitPracticeAnswer = async (req, res) => {
         ? "Correct answer!"
         : "Incorrect answer. Try again!",
     });
+
   } catch (error) {
     console.error("SUBMIT PRACTICE ANSWER:", error);
+
     res.status(500).json({
       success: false,
       message: "Failed to submit answer.",
@@ -352,7 +386,7 @@ export const submitPracticeAnswer = async (req, res) => {
 };
 
 
-// GET TOPIC-WISE QUESTION COUNTS
+// GET TOPIC-WISE DESCRIPTIVE QUESTION COUNTS
 export const getPracticeCounts = async (req, res) => {
   try {
     const { subjectId } = req.query;
@@ -372,6 +406,7 @@ export const getPracticeCounts = async (req, res) => {
 
       LEFT JOIN practice_questions q
         ON q.topic_id = t.id
+        AND q.type = 'descriptive'
     `;
 
     const values = [];
@@ -392,8 +427,10 @@ export const getPracticeCounts = async (req, res) => {
       success: true,
       counts,
     });
+
   } catch (error) {
     console.error("GET PRACTICE COUNTS:", error);
+
     res.status(500).json({
       success: false,
       message: "Failed to fetch question counts.",

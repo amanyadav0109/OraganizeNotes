@@ -3,24 +3,114 @@ import {
   CheckCircle2,
   XCircle,
   CircleHelp,
-  ArrowLeft
+  ArrowLeft,
 } from "lucide-react";
 
-export default function AnswerReview({
-  result,
-  onBack
-}) {
+export default function AnswerReview({ result, onBack }) {
   const questions = result?.questions || [];
   const answers = result?.answers || {};
   const language = result?.language || "English";
 
+  const answerMap = {
+    A: 0,
+    B: 1,
+    C: 2,
+    D: 3,
+  };
+
+  const getCorrectAnswer = (question) => {
+    if (typeof question.answer === "number") {
+      return question.answer;
+    }
+
+    if (question.correct_answer) {
+      return answerMap[question.correct_answer];
+    }
+
+    return -1;
+  };
+
+  const getQuestionText = (question) => {
+    if (typeof question.question === "string") {
+      return question.question;
+    }
+
+    return (
+      question.question?.[language] ||
+      question.question?.English ||
+      ""
+    );
+  };
+
+  const getOptions = (question) => {
+    if (Array.isArray(question.options)) {
+      return question.options;
+    }
+
+    if (question.options?.[language]) {
+      return question.options[language];
+    }
+
+    if (question.options?.English) {
+      return question.options.English;
+    }
+
+    return [
+      question.option_a,
+      question.option_b,
+      question.option_c,
+      question.option_d,
+    ].filter(Boolean);
+  };
+
+  const getExplanation = (question) => {
+    if (typeof question.explanation === "string") {
+      return question.explanation || "No explanation available.";
+    }
+
+    return (
+      question.explanation?.[language] ||
+      question.explanation?.English ||
+      "No explanation available."
+    );
+  };
+
+  if (questions.length === 0) {
+    return (
+      <div className="mx-auto max-w-4xl rounded-2xl border border-gray-200 bg-white p-10 text-center dark:border-slate-700 dark:bg-slate-900">
+        <CircleHelp
+          size={40}
+          className="mx-auto text-gray-400"
+        />
+
+        <h2 className="mt-4 text-xl font-bold text-gray-900 dark:text-white">
+          No Answer Review Available
+        </h2>
+
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          Questions are not available for this review.
+        </p>
+
+        <button
+          onClick={onBack}
+          className="mt-6 rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white"
+        >
+          Back to Result
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-4xl space-y-5 pb-10">
+
+      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             Answer Review
           </h2>
+
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Check your answers and understand your mistakes.
           </p>
@@ -35,34 +125,26 @@ export default function AnswerReview({
         </button>
       </div>
 
+      {/* Questions */}
       {questions.map((question, index) => {
         const selectedAnswer = answers[question.id];
-        const correctAnswer = question.answer;
+        const correctAnswer = getCorrectAnswer(question);
+
         const isAnswered = selectedAnswer !== undefined;
-        const isCorrect = selectedAnswer === correctAnswer;
+        const isCorrect =
+          isAnswered && selectedAnswer === correctAnswer;
 
-        const questionText =
-          question.question?.[language] ||
-          question.question?.English ||
-          question.question;
-
-        const options =
-          question.options?.[language] ||
-          question.options?.English ||
-          question.options ||
-          [];
-
-        const explanation =
-          question.explanation?.[language] ||
-          question.explanation?.English ||
-          question.explanation ||
-          "No explanation available.";
+        const questionText = getQuestionText(question);
+        const options = getOptions(question);
+        const explanation = getExplanation(question);
 
         return (
           <div
             key={question.id}
             className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900 sm:p-6"
           >
+
+            {/* Question Status */}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="text-sm font-bold text-gray-500 dark:text-gray-400">
                 Question {index + 1}
@@ -86,17 +168,22 @@ export default function AnswerReview({
               )}
             </div>
 
+            {/* Question */}
             <h3 className="mt-5 font-semibold leading-7 text-gray-900 dark:text-white">
               {questionText}
             </h3>
 
+            {/* Options */}
             <div className="mt-5 space-y-3">
               {options.map((option, optionIndex) => {
-                const isSelected = selectedAnswer === optionIndex;
-                const isAnswer = correctAnswer === optionIndex;
+                const isSelected =
+                  selectedAnswer === optionIndex;
+
+                const isAnswer =
+                  correctAnswer === optionIndex;
 
                 let optionStyle =
-                  "border-gray-200 dark:border-slate-700";
+                  "border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-200";
 
                 if (isAnswer) {
                   optionStyle =
@@ -123,14 +210,18 @@ export default function AnswerReview({
                       {isAnswer && (
                         <>
                           <CheckCircle2 size={17} />
-                          Correct Answer
+                          <span className="hidden sm:inline">
+                            Correct Answer
+                          </span>
                         </>
                       )}
 
                       {isSelected && !isAnswer && (
                         <>
                           <XCircle size={17} />
-                          Your Answer
+                          <span className="hidden sm:inline">
+                            Your Answer
+                          </span>
                         </>
                       )}
                     </span>
@@ -139,6 +230,7 @@ export default function AnswerReview({
               })}
             </div>
 
+            {/* Explanation */}
             <div className="mt-5 rounded-xl bg-blue-50 p-4 dark:bg-blue-950/30">
               <p className="text-sm font-bold text-blue-800 dark:text-blue-300">
                 Explanation
@@ -148,17 +240,20 @@ export default function AnswerReview({
                 {explanation}
               </p>
             </div>
+
           </div>
         );
       })}
 
+      {/* Back Button */}
       <button
         onClick={onBack}
-        className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700"
+        className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
       >
         <ArrowLeft size={18} />
         Back to Result
       </button>
+
     </div>
   );
 }
