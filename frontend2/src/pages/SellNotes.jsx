@@ -97,15 +97,15 @@ const handlePdfChange = (e) => {
 console.log("PDF BEFORE UPLOAD:", pdf);
 console.log("PDF NAME:", pdf?.name);
 
-        const uploadResponse = await axios.post(
-            "http://localhost:5000/api/marketplace/upload-pdf",
-            pdfFormData,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            }
-        );
+      const uploadResponse = await axios.post(
+  `${import.meta.env.VITE_SERVER_URL}/api/marketplace/upload-pdf`,
+  pdfFormData,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  }
+);
 
 
         console.log(
@@ -185,7 +185,7 @@ console.log("PDF NAME:", pdf?.name);
 
 
         const createResponse = await axios.post(
-            "http://localhost:5000/api/marketplace",
+            `${import.meta.env.VITE_SERVER_URL}/api/marketplace`,
             noteData,
             {
                 headers: {

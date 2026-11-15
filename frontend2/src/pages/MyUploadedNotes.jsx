@@ -35,17 +35,14 @@ const MyUploadedNotes = () => {
     const fetchMyNotes = async () => {
 
         try {
-
-            const token = getToken();
-
-            const response = await axios.get(
-                "http://localhost:5000/api/marketplace/my-notes",
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
+const response = await axios.get(
+  `${import.meta.env.VITE_SERVER_URL}/api/marketplace/my-notes`,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  }
+);
 
             if (response.data.success) {
                 setNotes(response.data.notes || []);
@@ -92,7 +89,7 @@ const MyUploadedNotes = () => {
             const token = getToken();
 
             const response = await axios.delete(
-                `http://localhost:5000/api/marketplace/${id}`,
+                `${import.meta.env.VITE_SERVER_URL}/api/marketplace/${id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
