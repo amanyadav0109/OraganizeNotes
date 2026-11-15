@@ -33,43 +33,50 @@ const MyUploadedNotes = () => {
     // ================= FETCH MY NOTES =================
 
     const fetchMyNotes = async () => {
+    try {
+        const token = getToken();
 
-        try {
-const response = await axios.get(
-  `${import.meta.env.VITE_SERVER_URL}/api/marketplace/my-notes`,
-  {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  }
-);
-
-            if (response.data.success) {
-                setNotes(response.data.notes || []);
-            }
-
-        } catch (error) {
-
-            console.error(
-                "MY UPLOADED NOTES ERROR:",
-                error
-            );
-
+        if (!token) {
+            console.error("Authentication token not found.");
             setNotes([]);
-
-        } finally {
-
-            setLoading(false);
-
+            return;
         }
-    };
 
+        const response = await axios.get(
+            `${import.meta.env.VITE_SERVER_URL}/api/marketplace/my-notes`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        console.log("MY UPLOADED NOTES RESPONSE:", response.data);
+
+        if (response.data.success) {
+            setNotes(response.data.notes || []);
+        } else {
+            setNotes([]);
+        }
+
+    } catch (error) {
+        console.error(
+            "MY UPLOADED NOTES ERROR:",
+            error.response?.data || error
+        );
+
+        setNotes([]);
+
+    } finally {
+        setLoading(false);
+    }
+};
 
     // ================= LOAD NOTES =================
 
-    useEffect(() => {
-        fetchMyNotes();
-    }, []);
+ useEffect(() => {
+    fetchMyNotes();
+}, []);
 
 
     // ================= DELETE NOTE =================
