@@ -15,9 +15,9 @@ const FindNotes = () => {
                 setLoading(true);
                 setError("");
 
-                const response = await fetch(
-                    "http://localhost:5000/api/marketplace"
-                );
+             const response = await fetch(
+  `${import.meta.env.VITE_SERVER_URL}/api/marketplace`
+);
 
                 const data = await response.json();
 
