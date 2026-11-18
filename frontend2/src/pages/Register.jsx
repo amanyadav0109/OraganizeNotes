@@ -91,58 +91,58 @@ function Register() {
   };
 
   // GOOGLE REGISTRATION / LOGIN
-  const handleGoogleLogin = async () => {
-    try {
-      setGoogleLoading(true);
+ const handleGoogleLogin = async () => {
+  try {
+    setGoogleLoading(true);
 
-      const result = await signInWithPopup(auth, googleProvider);
+    const result = await signInWithPopup(auth, googleProvider);
+    const idToken = await result.user.getIdToken();
 
-      const idToken = await result.user.getIdToken();
+    const response = await api.post("/auth/google", {
+      idToken,
+      mode: "register",
+    });
 
-      const response = await api.post("/auth/google", {
-        idToken,
-      });
-
-      if (!response.data.token || !response.data.user) {
-        throw new Error("Invalid response received from server");
-      }
-
-      login(response.data.token, response.data.user);
-
-      toast.success("Google authentication successful!");
-
-      setTimeout(() => {
-        navigate("/dashboard", { replace: true });
-      }, 700);
-
-    } catch (err) {
-      console.error("GOOGLE AUTH ERROR:", err);
-      console.error("Firebase Error Code:", err.code);
-      console.error("Backend Error:", err.response?.data);
-
-      if (err.code === "auth/popup-closed-by-user") {
-        toast.info("Google sign-in was cancelled.");
-      } else if (err.code === "auth/popup-blocked") {
-        toast.error("Popup blocked. Please allow popups for this website.");
-      } else if (err.code === "auth/unauthorized-domain") {
-        toast.error("This domain is not authorized in Firebase.");
-      } else if (err.code === "auth/operation-not-allowed") {
-        toast.error("Google sign-in is not enabled in Firebase.");
-      } else if (err.code === "auth/network-request-failed") {
-        toast.error("Network error. Please check your internet connection.");
-      } else if (err.response) {
-        toast.error(
-          err.response.data?.message || "Google authentication failed on server."
-        );
-      } else {
-        toast.error(
-          err.message || "Google login failed. Please try again."
-        );
-      }
-    } finally {
-      setGoogleLoading(false);
+    if (!response.data.token || !response.data.user) {
+      throw new Error("Invalid response received from server");
     }
-  };
+
+    login(response.data.token, response.data.user);
+
+    toast.success("Google registration successful!");
+
+    setTimeout(() => {
+      navigate("/dashboard", { replace: true });
+    }, 700);
+
+  } catch (err) {
+    console.error("GOOGLE AUTH ERROR:", err);
+    console.error("Firebase Error Code:", err.code);
+    console.error("Backend Error:", err.response?.data);
+
+    if (err.code === "auth/popup-closed-by-user") {
+      toast.info("Google sign-in was cancelled.");
+    } else if (err.code === "auth/popup-blocked") {
+      toast.error("Popup blocked. Please allow popups for this website.");
+    } else if (err.code === "auth/unauthorized-domain") {
+      toast.error("This domain is not authorized in Firebase.");
+    } else if (err.code === "auth/operation-not-allowed") {
+      toast.error("Google sign-in is not enabled in Firebase.");
+    } else if (err.code === "auth/network-request-failed") {
+      toast.error("Network error. Please check your internet connection.");
+    } else if (err.response) {
+      toast.error(
+        err.response.data?.message || "Google authentication failed on server."
+      );
+    } else {
+      toast.error(
+        err.message || "Google registration failed. Please try again."
+      );
+    }
+  } finally {
+    setGoogleLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 flex items-center justify-center px-4 py-10">

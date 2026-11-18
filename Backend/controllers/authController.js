@@ -184,7 +184,7 @@ export const logout = (req, res) => {
 
 export const googleLogin = async (req, res) => {
   try {
-    const { idToken } = req.body;
+    const { idToken, mode = "login" } = req.body;
 
     if (!idToken) {
       return res.status(400).json({
@@ -192,7 +192,6 @@ export const googleLogin = async (req, res) => {
       });
     }
 
-    // 1. Verify Firebase Google Token
     const decodedToken = await adminAuth.verifyIdToken(idToken);
 
     const email = decodedToken.email?.trim().toLowerCase();
@@ -208,7 +207,6 @@ export const googleLogin = async (req, res) => {
       });
     }
 
-    // 2. Check whether user already exists
     db.query(
       "SELECT * FROM users WHERE email = ?",
       [email],
@@ -225,8 +223,14 @@ export const googleLogin = async (req, res) => {
           });
         }
 
-        // 3. Existing user: Login
         if (results.length > 0) {
+          if (mode === "register") {
+            return res.status(409).json({
+              message: "This email is already registered. Please login!",
+              code: "USER_ALREADY_EXISTS",
+            });
+          }
+
           const user = results[0];
 
           const token = jwt.sign(
@@ -248,7 +252,6 @@ export const googleLogin = async (req, res) => {
           });
         }
 
-        // 4. New user: Register
         db.query(
           `INSERT INTO users (name, email, password)
            VALUES (?, ?, NULL)`,
@@ -261,10 +264,10 @@ export const googleLogin = async (req, res) => {
                 sqlMessage: err.sqlMessage,
               });
 
-              // Handle duplicate email
               if (err.code === "ER_DUP_ENTRY") {
                 return res.status(409).json({
                   message: "Account already exists. Please login.",
+                  code: "USER_ALREADY_EXISTS",
                 });
               }
 
@@ -273,7 +276,6 @@ export const googleLogin = async (req, res) => {
               });
             }
 
-            // 5. Generate JWT
             const token = jwt.sign(
               { id: result.insertId },
               process.env.JWT_SECRET,

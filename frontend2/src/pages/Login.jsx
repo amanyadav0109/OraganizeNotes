@@ -1,19 +1,19 @@
 import { useState } from "react";
-import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "../firebase/firebase.js";
 import { Link, useNavigate } from "react-router-dom";
 import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
-import api from "../services/api";
-import { useAuth } from "../context/AuthContext";
+import { signInWithPopup } from "firebase/auth";
+import { toast } from "react-toastify";
 
+import api from "../services/api";
+import { auth, googleProvider } from "../firebase/firebase.js";
+import { useAuth } from "../context/AuthContext";
 function Login() {
   const navigate = useNavigate();
-  
   const { login } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
-
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -30,200 +30,242 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!formData.email.trim() || !formData.password) {
+      toast.error("Please enter email and password");
+      return;
+    }
+
     try {
       setLoading(true);
 
-      const res = await api.post("/auth/login", formData);
-console.log(res.data);
-      login(res.data.token,res.data.user);
+      const res = await api.post("/auth/login", {
+        email: formData.email.trim(),
+        password: formData.password,
+      });
 
-      navigate("/dashboard", { replace: true });
+      if (!res.data.token || !res.data.user) {
+        throw new Error("Invalid response received from server");
+      }
+
+      login(res.data.token, res.data.user);
+
+      toast.success("Login successful! Welcome back.");
+
+      setTimeout(() => {
+        navigate("/dashboard", { replace: true });
+      }, 700);
+
     } catch (err) {
-        console.log(err);
-  console.log(err.response);
-  console.log(err.response?.data);
-      alert(err.response?.data?.message || "Login Failed");
+      console.error("LOGIN ERROR:", err);
+      console.error("Backend Error:", err.response?.data);
+
+      toast.error(
+        err.response?.data?.message ||
+        err.message ||
+        "Login failed. Please try again."
+      );
+
     } finally {
       setLoading(false);
     }
   };
-const handleGoogleLogin = async () => {
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
 
-    const idToken = await result.user.getIdToken();
+  const handleGoogleLogin = async () => {
+    try {
+      setGoogleLoading(true);
 
-    const response = await api.post("/auth/google", {
-      idToken,
-    });
+      const result = await signInWithPopup(auth, googleProvider);
 
-    login(response.data.token, response.data.user);
+      const idToken = await result.user.getIdToken();
 
-    navigate("/dashboard", { replace: true });
-  } catch (err) {
-    console.log(err);
-    alert("Google Login Failed");
-  }
-};
+      const response = await api.post("/auth/google", {
+        idToken,
+      });
 
- return (
-  <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 flex items-center justify-center px-4 py-10">
-    <div className="grid lg:grid-cols-2 bg-white rounded-3xl shadow-2xl overflow-hidden max-w-6xl w-full">
+      if (!response.data.token || !response.data.user) {
+        throw new Error("Invalid response received from server");
+      }
 
-      {/* Left Side */}
-      <div className="hidden lg:flex flex-col justify-center bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-12">
+      login(response.data.token, response.data.user);
 
-        <h1 className="text-5xl font-extrabold leading-tight">
-          Welcome to
-          <br />
-          OrganizeNotes
-        </h1>
+      toast.success("Google login successful!");
 
-        <p className="mt-6 text-lg text-blue-100 leading-8">
-          Organize your study notes, manage subjects,
-          set reminders and prepare smarter with AI.
-        </p>
+      setTimeout(() => {
+        navigate("/dashboard", { replace: true });
+      }, 700);
 
-        <div className="mt-10 space-y-4">
+    } catch (err) {
+      console.error("GOOGLE LOGIN ERROR:", err);
+      console.error("Firebase Error Code:", err.code);
+      console.error("Backend Error:", err.response?.data);
 
-          <div className="flex items-center gap-3">
-            ✅ AI Powered Study Assistant
-          </div>
+      if (err.code === "auth/popup-closed-by-user") {
+        toast.info("Google sign-in was cancelled.");
+      } else if (err.code === "auth/popup-blocked") {
+        toast.error("Popup blocked. Please allow popups.");
+      } else if (err.code === "auth/unauthorized-domain") {
+        toast.error("This domain is not authorized in Firebase.");
+      } else if (err.code === "auth/operation-not-allowed") {
+        toast.error("Google sign-in is not enabled in Firebase.");
+      } else if (err.code === "auth/network-request-failed") {
+        toast.error("Network error. Please check your internet.");
+      } else {
+        toast.error(
+          err.response?.data?.message ||
+          err.message ||
+          "Google login failed. Please try again."
+        );
+      }
 
-          <div className="flex items-center gap-3">
-            📚 Subject Management
-          </div>
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
-          <div className="flex items-center gap-3">
-            📝 Smart Notes
-          </div>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100 flex items-center justify-center px-4 py-10">
+      <div className="grid lg:grid-cols-2 bg-white rounded-3xl shadow-2xl overflow-hidden max-w-6xl w-full">
 
-          <div className="flex items-center gap-3">
-            🔔 Reminder System
-          </div>
+        <div className="hidden lg:flex flex-col justify-center bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-12">
+          <h1 className="text-5xl font-extrabold leading-tight">
+            Welcome to
+            <br />
+            OrganizeNotes
+          </h1>
 
-        </div>
-
-      </div>
-
-      {/* Right Side */}
-      <div className="p-8 sm:p-10 lg:p-14">
-
-        <div className="text-center">
-
-          <h2 className="text-4xl font-bold text-gray-800">
-            Welcome Back 👋
-          </h2>
-
-          <p className="mt-3 text-gray-500">
-            Login to continue your learning journey
+          <p className="mt-6 text-lg text-blue-100 leading-8">
+            Organize your study notes, manage subjects,
+            set reminders and prepare smarter with AI.
           </p>
 
-        </div>
-
-        <form
-          onSubmit={handleSubmit}
-          className="mt-10 space-y-6"
-        >
-
-          <div>
-
-            <label className="block mb-2 font-medium text-gray-700">
-              Email Address
-            </label>
-
-            <input
-              type="email"
-              name="email"
-              placeholder="Enter your email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
-            />
-
-          </div>
-
-          <div>
-
-            <label className="block mb-2 font-medium text-gray-700">
-              Password
-            </label>
-
-            <div className="relative">
-
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-12 outline-none focus:ring-2 focus:ring-blue-500"
-              />
-
-              <button
-                type="button"
-                onClick={() =>
-                  setShowPassword(!showPassword)
-                }
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
-              >
-                {showPassword ? (
-                  <FaEyeSlash />
-                ) : (
-                  <FaEye />
-                )}
-              </button>
-
+          <div className="mt-10 space-y-4">
+            <div className="flex items-center gap-3">
+              ✅ AI Powered Study Assistant
             </div>
 
+            <div className="flex items-center gap-3">
+              📚 Subject Management
+            </div>
+
+            <div className="flex items-center gap-3">
+              📝 Smart Notes
+            </div>
+
+            <div className="flex items-center gap-3">
+              🔔 Reminder System
+            </div>
+          </div>
+        </div>
+
+        <div className="p-8 sm:p-10 lg:p-14">
+
+          <div className="text-center">
+            <h2 className="text-4xl font-bold text-gray-800">
+              Welcome Back 👋
+            </h2>
+
+            <p className="mt-3 text-gray-500">
+              Login to continue your learning journey
+            </p>
+          </div>
+
+          <form
+            onSubmit={handleSubmit}
+            className="mt-10 space-y-6"
+          >
+            <div>
+              <label className="block mb-2 font-medium text-gray-700">
+                Email Address
+              </label>
+
+              <input
+                type="email"
+                name="email"
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleChange}
+                disabled={loading || googleLoading}
+                className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+              />
+            </div>
+
+            <div>
+              <label className="block mb-2 font-medium text-gray-700">
+                Password
+              </label>
+
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  disabled={loading || googleLoading}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-12 outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading || googleLoading}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || googleLoading}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition text-white font-semibold py-3 rounded-xl shadow-lg"
+            >
+              {loading ? "Logging in..." : "Login"}
+            </button>
+          </form>
+
+          <div className="my-8 flex items-center">
+            <div className="flex-1 border-t"></div>
+
+            <span className="px-4 text-gray-500">
+              OR
+            </span>
+
+            <div className="flex-1 border-t"></div>
           </div>
 
           <button
-            className="w-full bg-blue-600 hover:bg-blue-700 transition text-white font-semibold py-3 rounded-xl shadow-lg"
+            onClick={handleGoogleLogin}
+            type="button"
+            disabled={googleLoading || loading}
+            className="w-full border border-gray-300 py-3 rounded-xl hover:bg-gray-50 transition flex justify-center items-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {loading ? "Logging in..." : "Login"}
+            <FaGoogle className="text-red-500" />
+
+            {googleLoading
+              ? "Connecting to Google..."
+              : "Continue with Google"}
           </button>
 
-        </form>
+          <p className="text-center mt-8 text-gray-600">
+            Don't have an account?
 
-        <div className="my-8 flex items-center">
-
-          <div className="flex-1 border-t"></div>
-
-          <span className="px-4 text-gray-500">
-            OR
-          </span>
-
-          <div className="flex-1 border-t"></div>
+            <Link
+              to="/register"
+              className="ml-2 text-blue-600 font-semibold hover:underline"
+            >
+              Register
+            </Link>
+          </p>
 
         </div>
-
-        <button
-          onClick={handleGoogleLogin}
-          className="w-full border border-gray-300 py-3 rounded-xl hover:bg-gray-50 transition flex justify-center items-center gap-3"
-        >
-          <FaGoogle className="text-red-500" />
-          Continue with Google
-        </button>
-
-        <p className="text-center mt-8 text-gray-600">
-
-          Don't have an account?
-
-          <Link
-            to="/register"
-            className="ml-2 text-blue-600 font-semibold hover:underline"
-          >
-            Register
-          </Link>
-
-        </p>
-
       </div>
-
     </div>
-  </div>
-);
+  );
 }
 
 export default Login;
+
+
+
