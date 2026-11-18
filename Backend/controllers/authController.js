@@ -181,54 +181,126 @@ export const logout = (req, res) => {
 
 
 
+
 export const googleLogin = async (req, res) => {
   try {
     const { idToken } = req.body;
 
     if (!idToken) {
       return res.status(400).json({
-        message: "ID Token Required",
+        message: "Google ID Token is required",
       });
     }
 
+    // 1. Verify Firebase Google Token
     const decodedToken = await adminAuth.verifyIdToken(idToken);
 
-    const email = decodedToken.email;
-    const name = decodedToken.name;
+    const email = decodedToken.email?.trim().toLowerCase();
 
-    db.query(
-  "INSERT INTO users(name, email, password) VALUES(?, ?, NULL)",
-  [name, email],
-  (err, result) => {
-    if (err) {
-      console.error("Google Registration DB Error:", err);
+    const name =
+      decodedToken.name ||
+      email?.split("@")[0] ||
+      "Google User";
 
-      return res.status(500).json({
-        message: "Database Error",
+    if (!email || !decodedToken.email_verified) {
+      return res.status(401).json({
+        message: "Google email is not verified",
       });
     }
 
-    const token = jwt.sign(
-      { id: result.insertId },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    // 2. Check whether user already exists
+    db.query(
+      "SELECT * FROM users WHERE email = ?",
+      [email],
+      (err, results) => {
+        if (err) {
+          console.error("GOOGLE SELECT ERROR:", {
+            code: err.code,
+            message: err.message,
+            sqlMessage: err.sqlMessage,
+          });
 
-    return res.status(201).json({
-      token,
-      user: {
-        id: result.insertId,
-        name,
-        email,
-      },
-    });
-  }
-);
+          return res.status(500).json({
+            message: "Database Error",
+          });
+        }
+
+        // 3. Existing user: Login
+        if (results.length > 0) {
+          const user = results[0];
+
+          const token = jwt.sign(
+            { id: user.id },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
+          );
+
+          return res.status(200).json({
+            message: "Google Login Successful",
+            token,
+            user: {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              plan: user.plan,
+              profilePic: user.profilePic,
+            },
+          });
+        }
+
+        // 4. New user: Register
+        db.query(
+          `INSERT INTO users (name, email, password)
+           VALUES (?, ?, NULL)`,
+          [name, email],
+          (err, result) => {
+            if (err) {
+              console.error("GOOGLE INSERT ERROR:", {
+                code: err.code,
+                message: err.message,
+                sqlMessage: err.sqlMessage,
+              });
+
+              // Handle duplicate email
+              if (err.code === "ER_DUP_ENTRY") {
+                return res.status(409).json({
+                  message: "Account already exists. Please login.",
+                });
+              }
+
+              return res.status(500).json({
+                message: "Database Error",
+              });
+            }
+
+            // 5. Generate JWT
+            const token = jwt.sign(
+              { id: result.insertId },
+              process.env.JWT_SECRET,
+              { expiresIn: "7d" }
+            );
+
+            return res.status(201).json({
+              message: "Google Registration Successful",
+              token,
+              user: {
+                id: result.insertId,
+                name,
+                email,
+                plan: "free",
+                profilePic: decodedToken.picture || null,
+              },
+            });
+          }
+        );
+      }
+    );
   } catch (err) {
-    console.log(err);
+    console.error("GOOGLE AUTH ERROR:", err);
 
     return res.status(401).json({
       message: "Invalid Google Token",
     });
   }
 };
+

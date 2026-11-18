@@ -72,15 +72,22 @@ function Register() {
         navigate("/login");
       }, 1000);
 
-    } catch (err) {
-      console.error("REGISTER ERROR:", err);
+    }catch (err) {
+  console.error("REGISTER ERROR:", err);
 
-      toast.error(
-        err.response?.data?.message || "Registration failed. Please try again."
-      );
-    } finally {
-      setLoading(false);
-    }
+  const message = err.response?.data?.message;
+
+  if (
+    err.response?.status === 400 &&
+    message?.toLowerCase().includes("already exists")
+  ) {
+    toast.error("This email is already registered. Please login!");
+  } else {
+    toast.error(message || "Registration failed. Please try again.");
+  }
+} finally {
+  setLoading(false);
+}
   };
 
   // GOOGLE REGISTRATION / LOGIN
