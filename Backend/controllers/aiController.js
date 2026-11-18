@@ -49,9 +49,7 @@ async function extractPdfText(pdfBuffer) {
     pdfDocument = await loadingTask.promise;
 
     if (pdfDocument.numPages > MAX_PDF_PAGES) {
-      const error = new Error(
-        "PDF has too many pages. Maximum allowed is 100."
-      );
+      const error = new Error("PDF has too many pages.");
       error.code = "PDF_TOO_MANY_PAGES";
       throw error;
     }
@@ -69,9 +67,7 @@ async function extractPdfText(pdfBuffer) {
 
       const pageText = textContent.items
         .filter((item) => typeof item.str === "string")
-        .map((item) => {
-          return item.str + (item.hasEOL ? "\n" : " ");
-        })
+        .map((item) => item.str + (item.hasEOL ? "\n" : " "))
         .join("")
         .trim();
 
@@ -81,7 +77,6 @@ async function extractPdfText(pdfBuffer) {
 
       page.cleanup();
 
-   
       if (
         extractedPages.join("\n\n").length >= MAX_AI_TEXT_CHARS
       ) {
@@ -92,9 +87,7 @@ async function extractPdfText(pdfBuffer) {
     const extractedText = extractedPages.join("\n\n").trim();
 
     if (!extractedText) {
-      const error = new Error(
-        "No selectable text found in this PDF."
-      );
+      const error = new Error("No selectable text found in this PDF.");
       error.code = "PDF_NO_TEXT";
       throw error;
     }
@@ -102,22 +95,19 @@ async function extractPdfText(pdfBuffer) {
     return extractedText.slice(0, MAX_AI_TEXT_CHARS);
 
   } catch (error) {
-    if (error.code) {
-      throw error;
-    }
+    if (error.code) throw error;
 
     console.error("PDF TEXT EXTRACTION ERROR:", error);
 
     const pdfError = new Error("Unable to extract PDF text.");
     pdfError.code = "PDF_PARSE_FAILED";
-
     throw pdfError;
 
   } finally {
-    if (pdfDocument) {
-      await pdfDocument.destroy();
-    } else {
+    try {
       await loadingTask.destroy();
+    } catch (cleanupError) {
+      console.error("PDF CLEANUP ERROR:", cleanupError.message);
     }
   }
 }
