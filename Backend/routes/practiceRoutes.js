@@ -8,6 +8,7 @@ import {
   getPracticeQuestionById,
   submitPracticeAnswer,
   getPracticeCounts,
+  getRecentPracticeActivity,
 } from "../controllers/practiceController.js";
 
 const router = express.Router();
@@ -20,5 +21,5 @@ router.get("/questions", getPracticeQuestions);
 router.get("/questions/:id", getPracticeQuestionById);
 router.post("/submit", submitPracticeAnswer);
 router.get("/count", getPracticeCounts);
-
+router.get("/recent-activity", getRecentPracticeActivity);
 export default router;

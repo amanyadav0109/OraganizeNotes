@@ -17,7 +17,7 @@ import ReminderCalendar from "../components/ReminderCalendar";
 import UpcomingReminders from "../components/UpcomingReminders";
 import DashboardChart from "../components/DashboardChart";
 import FindNotes from "../components/FindNotes";
-import { getDashboardStats } from "../services/dashboardService";
+import { getDashboardStats,getRecentActivity, } from "../services/dashboardService";
 import TodayTasks from "../components/TodayTasks";
 
 // New Dashboard Components
@@ -36,7 +36,7 @@ function Dashboard() {
     totalPinned: 0,
     dueToday: 0,
   });
-
+const [recentActivities, setRecentActivities] = useState([]);
   const loadStats = async () => {
     try {
       const data = await getDashboardStats();
@@ -45,9 +45,21 @@ function Dashboard() {
       console.log("Dashboard stats error:", err);
     }
   };
+  const loadRecentActivity = async () => {
+  try {
+    const data = await getRecentActivity();
+
+    if (data.success) {
+      setRecentActivities(data.activities || []);
+    }
+  } catch (err) {
+    console.log("Recent activity error:", err);
+  }
+};
 
   useEffect(() => {
     loadStats();
+    loadRecentActivity();
   }, []);
 
   return (
@@ -180,7 +192,7 @@ function Dashboard() {
         </div>
 
         {/* Calendar and Reminders */}
-        <section className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8 mt-8 lg:mt-10">
+        <section className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8 mt-8 lg:mt-10 ">
 
           <div className="xl:col-span-2 flex flex-col gap-6">
 
@@ -194,8 +206,8 @@ function Dashboard() {
                 <div className="min-w-0">
                   <ReminderCalendar />
                 </div>
-
-                <div className="min-w-0">
+                 
+                <div className="min-w-0 h-full self-stretch flex">
                   <TodayTasks />
                 </div>
 
@@ -237,9 +249,10 @@ function Dashboard() {
         </section>
 
         {/* Recent Learning Activity */}
-        <section className="mt-8">
-          <RecentActivity activities={[]} />
-        </section>
+   
+<section className="mt-8">
+  <RecentActivity activities={recentActivities} />
+</section>
 
       </main>
 

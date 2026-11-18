@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { adminAuth } from "../config/firebaseAdmin.js";
 
-// REGISTER
+
 
 export const register = async (req, res) => {
       console.log("Login API called");
@@ -73,7 +73,7 @@ export const register = async (req, res) => {
 
 };
 
-// LOGIN
+
 
 export const login = (req, res) => {
 
@@ -147,7 +147,7 @@ export const login = (req, res) => {
 
 };
 
-// CURRENT USER
+
 
 export const currentUser = (req, res) => {
 
@@ -169,7 +169,7 @@ export const currentUser = (req, res) => {
 
 };
 
-// LOGOUT
+
 
 export const logout = (req, res) => {
 
@@ -197,56 +197,33 @@ export const googleLogin = async (req, res) => {
     const name = decodedToken.name;
 
     db.query(
-      "SELECT * FROM users WHERE email = ?",
-      [email],
-      (err, results) => {
-        if (err) {
-          return res.status(500).json({
-            message: "Database Error",
-          });
-        }
+  "INSERT INTO users(name, email, password) VALUES(?, ?, NULL)",
+  [name, email],
+  (err, result) => {
+    if (err) {
+      console.error("Google Registration DB Error:", err);
 
-        if (results.length > 0) {
-          const token = jwt.sign(
-            { id: results[0].id },
-            process.env.JWT_SECRET,
-            { expiresIn: "7d" }
-          );
+      return res.status(500).json({
+        message: "Database Error",
+      });
+    }
 
-          return res.json({
-            token,
-            user: results[0],
-          });
-        }
-
-        db.query(
-          "INSERT INTO users(name,email) VALUES(?,?)",
-          [name, email],
-          (err, result) => {
-            if (err) {
-              return res.status(500).json({
-                message: "Database Error",
-              });
-            }
-
-            const token = jwt.sign(
-              { id: result.insertId },
-              process.env.JWT_SECRET,
-              { expiresIn: "7d" }
-            );
-
-            res.json({
-              token,
-              user: {
-                id: result.insertId,
-                name,
-                email,
-              },
-            });
-          }
-        );
-      }
+    const token = jwt.sign(
+      { id: result.insertId },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
     );
+
+    return res.status(201).json({
+      token,
+      user: {
+        id: result.insertId,
+        name,
+        email,
+      },
+    });
+  }
+);
   } catch (err) {
     console.log(err);
 

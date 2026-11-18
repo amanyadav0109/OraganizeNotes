@@ -1,4 +1,6 @@
 import { Routes, Route } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import Notes from "./pages/Notes";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -26,141 +28,163 @@ import Practice from "./pages/Practice";
 import MockTests from "./pages/MockTests";
 import Analytics from "./pages/Analytics";
 import RevisionPlan from "./pages/RevisionPlan";
+
+
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Landing />} />
-   <Route path="/note/:id/edit" element={<EditNote />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/subject" element={<Subject />} />
-      <Route path="/register" element={<Register />} />
-      <Route
-        path="/note/:id"
-        element={
-          <ProtectedRoute>
-            <NoteDetails />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile/edit-name"
-        element={
-          <ProtectedRoute>
-            <EditName />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/user/:id" element={<PublicProfile />} />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-    path="/subject/:id/add-note"
-    element={<AddNote />}
-/>
+    <>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/note/:id/edit" element={<EditNote />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/subject" element={<Subject />} />
+        <Route path="/register" element={<Register />} />
 
-      <Route
-        path="/subject/:id"
-        element={
-          <ProtectedRoute>
-            <SubjectNotes />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/search/:query"
-        element={
-          <ProtectedRoute>
-            <Search />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-    path="/view-marketplace-note/:id"
-    element={<ViewMarketplaceNote />}
-/>
-      <Route
-    path="/edit-marketplace-note/:id"
-    element={<EditMarketplaceNote />}
-/>
-      <Route
-    path="/my-uploaded-notes"
-    element={<MyUploadedNotes />}
-/>
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/notes"
-        element={
-          <ProtectedRoute>
-            <Notes />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/note/:id"
+          element={
+            <ProtectedRoute>
+              <NoteDetails />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/pinned"
-        element={
-          <ProtectedRoute>
-            <Pinned />
-          </ProtectedRoute>
-        }
+        <Route
+          path="/profile/edit-name"
+          element={
+            <ProtectedRoute>
+              <EditName />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="/user/:id" element={<PublicProfile />} />
+
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="/subject/:id/add-note" element={<AddNote />} />
+
+        <Route
+          path="/subject/:id"
+          element={
+            <ProtectedRoute>
+              <SubjectNotes />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/search/:query"
+          element={
+            <ProtectedRoute>
+              <Search />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/view-marketplace-note/:id"
+          element={<ViewMarketplaceNote />}
+        />
+
+        <Route
+          path="/edit-marketplace-note/:id"
+          element={<EditMarketplaceNote />}
+        />
+
+        <Route
+          path="/my-uploaded-notes"
+          element={<MyUploadedNotes />}
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/notes"
+          element={
+            <ProtectedRoute>
+              <Notes />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/pinned"
+          element={
+            <ProtectedRoute>
+              <Pinned />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="/find-notes" element={<FindNotes />} />
+        <Route path="/get-notes/:id" element={<GetNotes />} />
+        <Route path="/sell-notes" element={<SellNotes />} />
+
+        <Route
+          path="/practice"
+          element={
+            <ProtectedRoute>
+              <Practice />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/mock-tests"
+          element={
+            <ProtectedRoute>
+              <MockTests />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute>
+              <Analytics />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/revision-plan"
+          element={
+            <ProtectedRoute>
+              <RevisionPlan />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        theme="colored"
+        newestOnTop
+        closeOnClick
       />
-       <Route path="*" element={<NotFound />} />
-       <Route path="/find-notes" element={<FindNotes />} />
-       <Route path="/get-notes/:id" element={<GetNotes />} />
-       <Route
-    path="/sell-notes"
-    element={<SellNotes />}
-/>
-<Route
-  path="/practice"
-  element={
-    <ProtectedRoute>
-      <Practice />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/mock-tests"
-  element={
-    <ProtectedRoute>
-      <MockTests />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/analytics"
-  element={
-    <ProtectedRoute>
-      <Analytics />
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/revision-plan"
-  element={
-    <ProtectedRoute>
-      <RevisionPlan />
-    </ProtectedRoute>
-  }
-/>
-    </Routes>
+    </>
   );
 }
 
 export default App;
+
+

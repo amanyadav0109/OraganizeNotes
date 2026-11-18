@@ -6,7 +6,7 @@ import Features from "../components/Features";
 import WhyChoose from "../components/WhyChoose";
 import Testimonials from "../components/Testimonials";
 import FAQ from "../components/FAQ";
-
+import MarketplaceSection from "../components/MarketplaceSection.jsx";
 import Footer from "../components/Footer";
 
 function Landing() {
@@ -15,7 +15,7 @@ function Landing() {
       <Navbar publicPage/>
       <Hero />
       <Features />
-    
+     <MarketplaceSection/>
      
       <WhyChoose />
       <Testimonials />

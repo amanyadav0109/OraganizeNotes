@@ -62,20 +62,23 @@ function UpcomingReminders() {
     }
   };
 
-  const scrollStyle = `
-    min-h-0 flex-1 overflow-y-auto overflow-x-hidden
-    overscroll-contain pr-2 space-y-3
-    [&::-webkit-scrollbar]:w-1.5
-    [&::-webkit-scrollbar-track]:rounded-full
-    [&::-webkit-scrollbar-track]:bg-gray-100
-    dark:[&::-webkit-scrollbar-track]:bg-slate-800
-    [&::-webkit-scrollbar-thumb]:rounded-full
-    [&::-webkit-scrollbar-thumb]:bg-gray-300
-    dark:[&::-webkit-scrollbar-thumb]:bg-slate-600
-  `;
+const scrollStyle = `
+  flex-1 min-h-0
+  overflow-y-auto overflow-x-hidden
+  overscroll-contain
+  space-y-3 pr-2
+  [&::-webkit-scrollbar]:w-1.5
+  [&::-webkit-scrollbar-track]:bg-slate-100
+  dark:[&::-webkit-scrollbar-track]:bg-slate-800
+  [&::-webkit-scrollbar-thumb]:bg-slate-300
+  dark:[&::-webkit-scrollbar-thumb]:bg-slate-600
+  [&::-webkit-scrollbar-thumb]:rounded-full
+`;
 
   return (
-    <div className="w-full min-w-0 space-y-5 sm:space-y-6">
+    <div className="w-full min-w-0 space-y-5 sm:space-y-6  lg:h-full lg:min-h-0
+    lg:flex lg:flex-col
+    lg:space-y-0 lg:gap-5">
 
       {/* Main Heading */}
       <div className="flex items-center gap-3">
@@ -92,14 +95,17 @@ function UpcomingReminders() {
       </div>
 
       {/* Upcoming */}
-      <section className="
-        h-[190px] w-full
-        flex flex-col overflow-hidden
-        rounded-2xl border border-yellow-300
-        dark:border-yellow-700
-        bg-yellow-50 dark:bg-yellow-900/10
-        p-4 sm:p-5 shadow
-      ">
+      <section
+  className="
+    h-[190px] w-full
+    flex flex-col overflow-hidden
+    rounded-2xl border border-yellow-300
+    dark:border-yellow-700
+    bg-yellow-50 dark:bg-yellow-900/10
+    p-4 sm:p-5 shadow
+    lg:h-auto lg:flex-1 lg:min-h-0
+  "
+>
 
         {/* Fixed Heading */}
         <div className="mb-3 flex items-center justify-between gap-2 shrink-0">
@@ -153,15 +159,17 @@ function UpcomingReminders() {
         </div>
       </section>
 
-      {/* Overdue */}
-      <section className="
-        h-[230px] w-full
-        flex flex-col overflow-hidden
-        rounded-2xl border border-red-300
-        dark:border-red-700
-        bg-red-50 dark:bg-red-900/10
-        p-4 sm:p-5 shadow
-      ">
+     <section
+  className="
+    h-[230px] w-full
+    flex flex-col overflow-hidden
+    rounded-2xl border border-red-300
+    dark:border-red-700
+    bg-red-50 dark:bg-red-900/10
+    p-4 sm:p-5 shadow
+    lg:h-auto lg:flex-1 lg:min-h-0
+  "
+>
 
         {/* Fixed Heading */}
         <div className="mb-3 flex items-center justify-between gap-2 shrink-0">

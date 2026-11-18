@@ -1,6 +1,6 @@
 
 import {
-  Plus,
+  ChartNoAxesCombined ,
   Brain,
   ClipboardList,
   CalendarDays,
@@ -34,6 +34,13 @@ export default function QuickActions() {
       color: "bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400",
       path: "/revision-plan",
     },
+    {
+  title: "Performance Analytics",
+  description: "Track your progress and performance",
+  icon: ChartNoAxesCombined,
+  color: "bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400",
+  path: "/analytics",
+},
   ];
 
   return (

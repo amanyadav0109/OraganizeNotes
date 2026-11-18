@@ -261,19 +261,20 @@ function TodayTasks() {
   // =====================================================
 
   return (
-    <section
-      className="
-        w-full min-w-0
-        h-[480px] sm:h-[500px] lg:h-[520px]
-        overflow-hidden
-        rounded-2xl lg:rounded-3xl
-        border border-slate-200 dark:border-slate-800
-        bg-white dark:bg-slate-900
-        p-4 sm:p-5 lg:p-6
-        shadow-lg
-        flex flex-col
-      "
-    >
+   <section
+  className="
+    w-full min-w-0
+    h-full min-h-[520px]
+    self-stretch
+    overflow-hidden
+    rounded-2xl lg:rounded-3xl
+    border border-slate-200 dark:border-slate-800
+    bg-white dark:bg-slate-900
+    p-4 sm:p-5 lg:p-6
+    shadow-lg
+    flex flex-col
+  "
+>
 
       {/* HEADER */}
 
@@ -435,21 +436,20 @@ function TodayTasks() {
       {/* TASK LIST */}
 
       <div
-        className="
-          flex-1 min-h-0
-          overflow-y-auto overflow-x-hidden
-          overscroll-contain
-          pr-2 space-y-3
-          [&::-webkit-scrollbar]:w-1.5
-          [&::-webkit-scrollbar-track]:rounded-full
-          [&::-webkit-scrollbar-track]:bg-slate-100
-          dark:[&::-webkit-scrollbar-track]:bg-slate-800
-          [&::-webkit-scrollbar-thumb]:rounded-full
-          [&::-webkit-scrollbar-thumb]:bg-slate-300
-          dark:[&::-webkit-scrollbar-thumb]:bg-slate-600
-        "
-      >
-
+  className="
+    flex-1 min-h-0
+    overflow-y-auto overflow-x-hidden
+    overscroll-contain
+    pr-2 space-y-3
+    [&::-webkit-scrollbar]:w-1.5
+    [&::-webkit-scrollbar-track]:rounded-full
+    [&::-webkit-scrollbar-track]:bg-slate-100
+    dark:[&::-webkit-scrollbar-track]:bg-slate-800
+    [&::-webkit-scrollbar-thumb]:rounded-full
+    [&::-webkit-scrollbar-thumb]:bg-slate-300
+    dark:[&::-webkit-scrollbar-thumb]:bg-slate-600
+  "
+>
         {loading ? (
 
           <div
