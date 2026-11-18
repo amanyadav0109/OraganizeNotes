@@ -90,7 +90,7 @@ function Register() {
 }
   };
 
-  // GOOGLE REGISTRATION / LOGIN
+
  const handleGoogleLogin = async () => {
   try {
     setGoogleLoading(true);

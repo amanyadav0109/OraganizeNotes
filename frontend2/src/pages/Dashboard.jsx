@@ -24,7 +24,7 @@ import TodayTasks from "../components/TodayTasks";
 import StudyProgress from "../components/StudyProgress";
 import QuickActions from "../components/QuickActions";
 import RecommendedPractice from "../components/RecommendedPractice";
-import RecentActivity from "../components/RecentActivity";
+
 import WeeklyStudyActivity from "../components/WeeklyStudyActivity";
 
 function Dashboard() {
@@ -36,7 +36,7 @@ function Dashboard() {
     totalPinned: 0,
     dueToday: 0,
   });
-const [recentActivities, setRecentActivities] = useState([]);
+
   const loadStats = async () => {
     try {
       const data = await getDashboardStats();
@@ -45,21 +45,11 @@ const [recentActivities, setRecentActivities] = useState([]);
       console.log("Dashboard stats error:", err);
     }
   };
-  const loadRecentActivity = async () => {
-  try {
-    const data = await getRecentActivity();
 
-    if (data.success) {
-      setRecentActivities(data.activities || []);
-    }
-  } catch (err) {
-    console.log("Recent activity error:", err);
-  }
-};
 
   useEffect(() => {
     loadStats();
-    loadRecentActivity();
+   
   }, []);
 
   return (
@@ -248,11 +238,7 @@ const [recentActivities, setRecentActivities] = useState([]);
 
         </section>
 
-        {/* Recent Learning Activity */}
-   
-<section className="mt-8">
-  <RecentActivity activities={recentActivities} />
-</section>
+
 
       </main>
 

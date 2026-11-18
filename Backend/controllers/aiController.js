@@ -1,7 +1,8 @@
 
 import { GoogleGenAI } from "@google/genai";
 import db from "../config/db.js";
-
+import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
+import { bucket } from "../config/firebaseAdmin.js";
 const DAILY_FREE_LIMIT = 10;
 const MODEL_NAME = "gemini-3.5-flash-lite";
 const AI_TIMEOUT_MS = 45000;
@@ -33,6 +34,94 @@ function parseAIResponse(text) {
     throw new Error("Gemini returned invalid JSON.");
   }
 }
+const MAX_PDF_PAGES = 100;
+const MAX_AI_TEXT_CHARS = 100000;
+
+async function extractPdfText(pdfBuffer) {
+  const loadingTask = getDocument({
+    data: new Uint8Array(pdfBuffer),
+    isEvalSupported: false,
+  });
+
+  let pdfDocument;
+
+  try {
+    pdfDocument = await loadingTask.promise;
+
+    if (pdfDocument.numPages > MAX_PDF_PAGES) {
+      const error = new Error(
+        "PDF has too many pages. Maximum allowed is 100."
+      );
+      error.code = "PDF_TOO_MANY_PAGES";
+      throw error;
+    }
+
+    const extractedPages = [];
+
+    for (
+      let pageNumber = 1;
+      pageNumber <= pdfDocument.numPages;
+      pageNumber++
+    ) {
+      const page = await pdfDocument.getPage(pageNumber);
+
+      const textContent = await page.getTextContent();
+
+      const pageText = textContent.items
+        .filter((item) => typeof item.str === "string")
+        .map((item) => {
+          return item.str + (item.hasEOL ? "\n" : " ");
+        })
+        .join("")
+        .trim();
+
+      if (pageText) {
+        extractedPages.push(pageText);
+      }
+
+      page.cleanup();
+
+   
+      if (
+        extractedPages.join("\n\n").length >= MAX_AI_TEXT_CHARS
+      ) {
+        break;
+      }
+    }
+
+    const extractedText = extractedPages.join("\n\n").trim();
+
+    if (!extractedText) {
+      const error = new Error(
+        "No selectable text found in this PDF."
+      );
+      error.code = "PDF_NO_TEXT";
+      throw error;
+    }
+
+    return extractedText.slice(0, MAX_AI_TEXT_CHARS);
+
+  } catch (error) {
+    if (error.code) {
+      throw error;
+    }
+
+    console.error("PDF TEXT EXTRACTION ERROR:", error);
+
+    const pdfError = new Error("Unable to extract PDF text.");
+    pdfError.code = "PDF_PARSE_FAILED";
+
+    throw pdfError;
+
+  } finally {
+    if (pdfDocument) {
+      await pdfDocument.destroy();
+    } else {
+      await loadingTask.destroy();
+    }
+  }
+}
+
 
 function buildPrompt(type, content, questionCount = 5) {
   const text = String(content ?? "").trim();
@@ -198,13 +287,75 @@ export const generateAI = async (req, res) => {
       .trim()
       .toLowerCase();
 
-    const content =
-      req.body?.content ??
-      req.body?.text ??
-      req.body?.notes ??
-      req.body?.noteContent;
+    
+let content =
+  req.body?.content ??
+  req.body?.text ??
+  req.body?.notes ??
+  req.body?.noteContent ??
+  "";
+  console.log("========== AI REQUEST DEBUG ==========");
+console.log("AI TYPE:", type);
+console.log("NOTE ID:", req.body?.noteId);
+console.log("REQUEST TEXT:", req.body?.text);
+console.log("REQUEST CONTENT:", req.body?.content);
+
+const noteId = req.body?.noteId;
+
+if (noteId !== undefined && noteId !== null && noteId !== "") {
+  const numericNoteId = Number(noteId);
+
+  if (!Number.isSafeInteger(numericNoteId) || numericNoteId <= 0) {
+    return sendError(res, 400, "Invalid note ID.");
+  }
+
+  // Fetch only the authenticated user's note.
+  const [noteRows] = await db.promise().execute(
+    `SELECT content, filePath, fileName
+     FROM notes
+     WHERE id = ? AND userId = ?
+     LIMIT 1`,
+    [numericNoteId, userId]
+  );
+
+  if (!noteRows.length) {
+    return sendError(res, 404, "Note not found.");
+  }
+
+  const note = noteRows[0];
+
+  const contentParts = [];
+
+  // Include normal note content if available.
+  if (note.content?.trim()) {
+    contentParts.push(note.content.trim());
+  }
+
+  // Extract text from the attached PDF.
+  if (note.filePath) {
+    const pdfFile = bucket.file(note.filePath);
+
+    const [exists] = await pdfFile.exists();
+
+    if (!exists) {
+      return sendError(res, 404, "Attached PDF file not found.");
+    }
+
+    const [pdfBuffer] = await pdfFile.download();
+
+    const extractedText = await extractPdfText(pdfBuffer);
+
+    contentParts.push(extractedText);
+  }
+
+  content = contentParts.join("\n\n").slice(
+    0,
+    MAX_AI_TEXT_CHARS
+  );
+}
 
 const requestedCount = Number(req.body?.questionCount ?? 5);
+
 
 const questionCount = [5, 10, 20].includes(requestedCount)
   ? requestedCount

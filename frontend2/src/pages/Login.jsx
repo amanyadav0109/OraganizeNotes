@@ -142,7 +142,9 @@ function Login() {
             <div className="flex items-center gap-3">
               ✅ AI Powered Study Assistant
             </div>
-
+ <div className="flex items-center gap-3">
+              🔔 Daily Progress Track
+            </div>
             <div className="flex items-center gap-3">
               📚 Subject Management
             </div>
@@ -154,6 +156,13 @@ function Login() {
             <div className="flex items-center gap-3">
               🔔 Reminder System
             </div>
+            <div className="flex items-center gap-3">
+              🔔 Marketplace Notes
+            </div>
+            <div className="flex items-center gap-3">
+              🔔 Practice & MCQ Questions
+            </div>
+            
           </div>
         </div>
 

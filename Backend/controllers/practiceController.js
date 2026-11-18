@@ -438,59 +438,5 @@ export const getPracticeCounts = async (req, res) => {
   }
 };
 
-// GET RECENT PRACTICE ACTIVITY
-export const getRecentPracticeActivity = async (req, res) => {
-  try {
-    const userId = req.userId;
 
-    const [activities] = await db.promise().query(
-      `SELECT
-          pa.id,
-          'practice' AS type,
-          CONCAT('Practiced ', COALESCE(t.name, s.name, 'a topic')) AS title,
-          q.question AS question,
-          s.name AS subject,
-          t.name AS topic,
-          pa.is_correct AS isCorrect,
-          pa.submitted_answer AS submittedAnswer,
-          pa.attempted_at AS date
-       FROM practice_attempts pa
-
-       INNER JOIN practice_questions q
-          ON q.id = pa.question_id
-
-       LEFT JOIN practice_subjects s
-          ON s.id = q.subject_id
-
-       LEFT JOIN practice_topics t
-          ON t.id = q.topic_id
-
-       WHERE pa.user_id = ?
-
-       ORDER BY pa.attempted_at DESC
-       LIMIT 10`,
-      [userId]
-    );
-
-    const formattedActivities = activities.map((activity) => ({
-      ...activity,
-      completed: Boolean(activity.isCorrect),
-      description: `${activity.subject || "Practice"}${
-        activity.topic ? ` • ${activity.topic}` : ""
-      } • ${activity.isCorrect ? "Correct answer" : "Incorrect answer"}`,
-    }));
-
-    res.status(200).json({
-      success: true,
-      activities: formattedActivities,
-    });
-  } catch (error) {
-    console.error("GET RECENT PRACTICE ACTIVITY:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch recent activity.",
-    });
-  }
-};
 

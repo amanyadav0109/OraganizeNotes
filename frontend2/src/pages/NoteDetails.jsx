@@ -294,7 +294,7 @@ const [pdfUrl, setPdfUrl] = useState(null);
 
               <button
                 onClick={() => {
-                  setSelectedContent(note.content);
+                  setSelectedContent(note.content || "");
                   setShowAI(true);
                 }}
                 title="AI Assistant"
@@ -340,6 +340,7 @@ const [pdfUrl, setPdfUrl] = useState(null);
     {showAI && (
       <AIAssistant
         text={selectedContent}
+         noteId={note.id}
         closeModal={() => setShowAI(false)}
       />
     )}

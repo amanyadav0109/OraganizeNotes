@@ -7,14 +7,13 @@ import {
   FaCopy,
   FaCrown,
 } from "react-icons/fa";
-
 import { generateAI } from "../services/aiService";
 import SummaryView from "./SummaryView";
 import InterviewView from "./InterviewView";
 import MCQView from "./MCQView";
 import SubscriptionModal from "./SubscriptionModal";
 
-function AIAssistant({ text, closeModal }) {
+function AIAssistant({ text, closeModal, noteId }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [selectedAction, setSelectedAction] = useState("");
@@ -45,10 +44,13 @@ function AIAssistant({ text, closeModal }) {
 
   // AI GENERATION
   const runAI = async (action) => {
-    if (typeof text !== "string" || !text.trim()) {
-      setError("This note is empty. Please add some content first.");
-      return;
-    }
+    if (
+  (!noteId || !Number.isInteger(Number(noteId))) &&
+  (typeof text !== "string" || !text.trim())
+) {
+  setError("This note is empty. Please add some content first.");
+  return;
+}
 
     setLoading(true);
     setSelectedAction(action);
@@ -58,7 +60,12 @@ function AIAssistant({ text, closeModal }) {
     setSubscriptionSuccess(false);
 
     try {
-      const payload = await generateAI(action, text);
+     const payload = await generateAI(
+  action,
+  text,
+  5,
+  noteId
+);
 
       if (!payload || typeof payload !== "object") {
         throw new Error("Invalid response received from the AI server.");
