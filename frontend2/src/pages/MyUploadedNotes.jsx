@@ -1,165 +1,101 @@
 import React, { useEffect, useState } from "react";
-import {
-    FaFilePdf,
-    FaEdit,
-    FaTrash,
-    FaPlus
-} from "react-icons/fa";
+import { FaFilePdf, FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
+import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 
 const MyUploadedNotes = () => {
-
-    const navigate = useNavigate();
-
-    const [notes, setNotes] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-
-    // ================= TOKEN =================
-
-    const getToken = () => {
-        return (
-            localStorage.getItem("token") ||
-            localStorage.getItem("Token") ||
-            localStorage.getItem("jwt")
-        );
-    };
-
-
-    // ================= FETCH MY NOTES =================
-
-    const fetchMyNotes = async () => {
-    try {
-        const token = getToken();
-
-        if (!token) {
-            console.error("Authentication token not found.");
-            setNotes([]);
-            return;
-        }
-
-        const response = await axios.get(
-            `${import.meta.env.VITE_SERVER_URL}/api/marketplace/my-notes`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            }
-        );
-
-        console.log("MY UPLOADED NOTES RESPONSE:", response.data);
-
-        if (response.data.success) {
-            setNotes(response.data.notes || []);
-        } else {
-            setNotes([]);
-        }
-
-    } catch (error) {
-        console.error(
-            "MY UPLOADED NOTES ERROR:",
-            error.response?.data || error
-        );
-
-        setNotes([]);
-
-    } finally {
-        setLoading(false);
-    }
-};
-
-    // ================= LOAD NOTES =================
-
- useEffect(() => {
-    fetchMyNotes();
-}, []);
-
-
-    // ================= DELETE NOTE =================
-
-    const handleDelete = async (id) => {
-
-        const confirmDelete = window.confirm(
-            "Are you sure you want to delete this note?"
-        );
-
-        if (!confirmDelete) {
-            return;
-        }
-
-        try {
-
-            const token = getToken();
-
-            const response = await axios.delete(
-                `${import.meta.env.VITE_SERVER_URL}/api/marketplace/${id}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
-
-            if (response.data.success) {
-
-                setNotes((prevNotes) =>
-                    prevNotes.filter(
-                        (note) => note.id !== id
-                    )
-                );
-
-                alert("Note deleted successfully.");
-
-            }
-
-        } catch (error) {
-
-            console.error(
-                "DELETE NOTE ERROR:",
-                error
-            );
-
-            alert(
-                error.response?.data?.message ||
-                "Failed to delete note."
-            );
-
-        }
-    };
-
-
-    // ================= TOTAL VALUE =================
-
-    const totalValue = notes.reduce(
-        (total, note) =>
-            total + Number(note.price || 0),
-        0
-    );
-
-
+  const navigate = useNavigate();
+  const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const getToken = () => {
     return (
+      localStorage.getItem("token") ||
+      localStorage.getItem("Token") ||
+      localStorage.getItem("jwt")
+    );
+  };
 
-        <div className="
+  const fetchMyNotes = async () => {
+    try {
+      const token = getToken();
+
+      if (!token) {
+        console.error("Authentication token not found.");
+        setNotes([]);
+        return;
+      }
+
+      const response = await axios.get(
+        `${import.meta.env.VITE_SERVER_URL}/api/marketplace/my-notes`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      console.log("MY UPLOADED NOTES RESPONSE:", response.data);
+
+      if (response.data.success) {
+        setNotes(response.data.notes || []);
+      } else {
+        setNotes([]);
+      }
+    } catch (error) {
+      console.error("MY UPLOADED NOTES ERROR:", error.response?.data || error);
+
+      setNotes([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMyNotes();
+  }, []);
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this note?",
+    );
+    if (!confirmDelete) {
+      return;
+    }
+    try {
+      const token = getToken();
+      const response = await axios.delete(
+        `${import.meta.env.VITE_SERVER_URL}/api/marketplace/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      if (response.data.success) {
+        setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
+        toast.success("Note deleted successfully.");
+      }
+    } catch (error) {
+      console.error("DELETE NOTE ERROR:", error);
+      toast.error(error.response?.data?.message || "Failed to delete note.");
+    }
+  };
+  const totalValue = notes.reduce(
+    (total, note) => total + Number(note.price || 0),
+    0,
+  );
+  return (
+    <div
+      className="
             page min-h-screen bg-gray-50 dark:bg-[#080d18] transition-colors duration-200
-        ">
-
-            {/* ================= NAVBAR ================= */}
-
-            <Navbar />
-
-
-            {/* ================= SIDEBAR ================= */}
-
-            <Sidebar />
-
-
-            {/* ================= MAIN CONTENT ================= */}
-
-           <main className="
+        "
+    >
+      <Navbar />
+      <Sidebar />
+      <main
+        className="
     ml-0
     lg:ml-[215px]
 
@@ -178,14 +114,10 @@ const MyUploadedNotes = () => {
 
     transition-all
     duration-200
-  ">
-
-
-                {/* ================================================= */}
-                {/* HEADER */}
-                {/* ================================================= */}
-
-                <div  className="
+  "
+      >
+        <div
+          className="
             bg-white
             dark:bg-slate-900
             border
@@ -207,22 +139,20 @@ const MyUploadedNotes = () => {
             shadow-sm
             dark:shadow-none
             transition-colors
-          ">
-
-
-                    {/* TITLE */}
-
-                    <div>
-
-                        <div className="
+          "
+        >
+          <div>
+            <div
+              className="
                             flex
                             items-center
                             gap-3
-                        ">
+                        "
+            >
+              {/* ICON */}
 
-                            {/* ICON */}
-
-                            <div className="
+              <div
+                className="
                                 w-11
                                 h-11
 
@@ -234,25 +164,19 @@ const MyUploadedNotes = () => {
                                 flex
                                 items-center
                                 justify-center
-                            ">
-
-                                <FaFilePdf
-                                    className="
+                            "
+              >
+                <FaFilePdf
+                  className="
                                         text-blue-600
                                         dark:text-blue-400
                                         text-xl
                                     "
-                                />
-
-                            </div>
-
-
-                            {/* TEXT */}
-
-                            <div className="min-w-0">
-
-                                <h1
-                className="
+                />
+              </div>
+              <div className="min-w-0">
+                <h1
+                  className="
                   text-xl
                   sm:text-2xl
                   md:text-3xl
@@ -261,31 +185,23 @@ const MyUploadedNotes = () => {
                   dark:text-white
                   truncate
                 "
-              >
-                                    My Uploaded Notes
-                                </h1>
+                >
+                  My Uploaded Notes
+                </h1>
 
+                <p
+                  className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1
+                                "
+                >
+                  Manage the notes you have uploaded for sale.
+                </p>
+              </div>
+            </div>
+          </div>
 
-                                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1
-                                ">
-                                    Manage the notes you have uploaded
-                                    for sale.
-                                </p>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    {/* UPLOAD BUTTON */}
-
-                    <button
-                        onClick={() =>
-                            navigate("/sell-notes")
-                        }
-                         className="
+          <button
+            onClick={() => navigate("/sell-notes")}
+            className="
               w-full
               sm:w-auto
               min-h-[44px]
@@ -305,20 +221,15 @@ const MyUploadedNotes = () => {
               shadow-sm
               shrink-0
             "
-                    >
+          >
+            <FaPlus />
+            Upload New Note
+          </button>
+        </div>
 
-                        <FaPlus />
-
-                        Upload New Note
-
-                    </button>
-
-                </div>
-
-
-                {loading && (
-
-                    <div className="
+        {loading && (
+          <div
+            className="
                         max-w-[1200px]
                         mx-auto
 
@@ -334,9 +245,10 @@ const MyUploadedNotes = () => {
                         py-20
 
                         text-center
-                    ">
-
-                        <div className="
+                    "
+          >
+            <div
+              className="
                             w-10
                             h-10
 
@@ -354,27 +266,27 @@ const MyUploadedNotes = () => {
                             mx-auto
 
                             mb-5
-                        " />
+                        "
+            />
 
-                        <p className="
+            <p
+              className="
                             text-gray-500
                             dark:text-gray-400
-                        ">
-                            Loading your uploaded notes...
-                        </p>
+                        "
+            >
+              Loading your uploaded notes...
+            </p>
+          </div>
+        )}
 
-                    </div>
+        {/* ================================================= */}
+        {/* STATS */}
+        {/* ================================================= */}
 
-                )}
-
-
-                {/* ================================================= */}
-                {/* STATS */}
-                {/* ================================================= */}
-
-                {!loading && notes.length > 0 && (
-
-                    <div className="
+        {!loading && notes.length > 0 && (
+          <div
+            className="
                         grid
 
                         grid-cols-1
@@ -384,12 +296,12 @@ const MyUploadedNotes = () => {
                         gap-4
 
                         mb-8
-                    ">
+                    "
+          >
+            {/* TOTAL NOTES */}
 
-
-                        {/* TOTAL NOTES */}
-
-                        <div className="
+            <div
+              className="
                             bg-white
                             dark:bg-[#111c32]
 
@@ -403,15 +315,17 @@ const MyUploadedNotes = () => {
 
                             shadow-sm
                             dark:shadow-none
-                        ">
-
-                            <div className="
+                        "
+            >
+              <div
+                className="
                                 flex
                                 items-center
                                 gap-4
-                            ">
-
-                                <div className="
+                            "
+              >
+                <div
+                  className="
                                     w-11
                                     h-11
 
@@ -423,51 +337,48 @@ const MyUploadedNotes = () => {
                                     flex
                                     items-center
                                     justify-center
-                                ">
-
-                                    <FaFilePdf
-                                        className="
+                                "
+                >
+                  <FaFilePdf
+                    className="
                                             text-blue-600
                                             dark:text-blue-400
                                         "
-                                    />
+                  />
+                </div>
 
-                                </div>
-
-
-                                <div>
-
-                                    <p className="
+                <div>
+                  <p
+                    className="
                                         text-sm
 
                                         text-gray-500
                                         dark:text-gray-400
-                                    ">
-                                        Uploaded Notes
-                                    </p>
+                                    "
+                  >
+                    Uploaded Notes
+                  </p>
 
-
-                                    <p className="
+                  <p
+                    className="
                                         text-2xl
 
                                         font-bold
 
                                         text-gray-900
                                         dark:text-white
-                                    ">
-                                        {notes.length}
-                                    </p>
+                                    "
+                  >
+                    {notes.length}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-                                </div>
+            {/* LISTED VALUE */}
 
-                            </div>
-
-                        </div>
-
-
-                        {/* LISTED VALUE */}
-
-                        <div className="
+            <div
+              className="
                             bg-white
                             dark:bg-[#111c32]
 
@@ -481,15 +392,17 @@ const MyUploadedNotes = () => {
 
                             shadow-sm
                             dark:shadow-none
-                        ">
-
-                            <div className="
+                        "
+            >
+              <div
+                className="
                                 flex
                                 items-center
                                 gap-4
-                            ">
-
-                                <div className="
+                            "
+              >
+                <div
+                  className="
                                     w-11
                                     h-11
 
@@ -501,55 +414,54 @@ const MyUploadedNotes = () => {
                                     flex
                                     items-center
                                     justify-center
-                                ">
-
-                                    <span className="
+                                "
+                >
+                  <span
+                    className="
                                         text-cyan-600
                                         dark:text-cyan-400
 
                                         text-xl
 
                                         font-bold
-                                    ">
-                                        ₹
-                                    </span>
+                                    "
+                  >
+                    ₹
+                  </span>
+                </div>
 
-                                </div>
-
-
-                                <div>
-
-                                    <p className="
+                <div>
+                  <p
+                    className="
                                         text-sm
 
                                         text-gray-500
                                         dark:text-gray-400
-                                    ">
-                                        Listed Value
-                                    </p>
+                                    "
+                  >
+                    Listed Value
+                  </p>
 
-
-                                    <p className="
+                  <p
+                    className="
                                         text-2xl
 
                                         font-bold
 
                                         text-gray-900
                                         dark:text-white
-                                    ">
-                                        ₹{totalValue.toFixed(2)}
-                                    </p>
+                                    "
+                  >
+                    ₹{totalValue.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-                                </div>
+            {/* STATUS */}
 
-                            </div>
-
-                        </div>
-
-
-                        {/* STATUS */}
-
-                        <div className="
+            <div
+              className="
                             bg-white
                             dark:bg-[#111c32]
 
@@ -563,15 +475,17 @@ const MyUploadedNotes = () => {
 
                             shadow-sm
                             dark:shadow-none
-                        ">
-
-                            <div className="
+                        "
+            >
+              <div
+                className="
                                 flex
                                 items-center
                                 gap-4
-                            ">
-
-                                <div className="
+                            "
+              >
+                <div
+                  className="
                                     w-11
                                     h-11
 
@@ -583,61 +497,57 @@ const MyUploadedNotes = () => {
                                     flex
                                     items-center
                                     justify-center
-                                ">
-
-                                    <span className="
+                                "
+                >
+                  <span
+                    className="
                                         w-3
                                         h-3
 
                                         rounded-full
 
                                         bg-green-500
-                                    " />
+                                    "
+                  />
+                </div>
 
-                                </div>
-
-
-                                <div>
-
-                                    <p className="
+                <div>
+                  <p
+                    className="
                                         text-sm
 
                                         text-gray-500
                                         dark:text-gray-400
-                                    ">
-                                        Marketplace Status
-                                    </p>
+                                    "
+                  >
+                    Marketplace Status
+                  </p>
 
-
-                                    <p className="
+                  <p
+                    className="
                                         text-lg
 
                                         font-semibold
 
                                         text-green-600
                                         dark:text-green-400
-                                    ">
-                                        Active
-                                    </p>
+                                    "
+                  >
+                    Active
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-                                </div>
+        {/* ================================================= */}
+        {/* EMPTY STATE */}
+        {/* ================================================= */}
 
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                )}
-
-
-                {/* ================================================= */}
-                {/* EMPTY STATE */}
-                {/* ================================================= */}
-
-                {!loading && notes.length === 0 && (
-
-                    <div className="
+        {!loading && notes.length === 0 && (
+          <div
+            className="
                         max-w-[900px]
                         mx-auto
 
@@ -660,12 +570,12 @@ const MyUploadedNotes = () => {
 
                         shadow-sm
                         dark:shadow-none
-                    ">
+                    "
+          >
+            {/* ICON */}
 
-
-                        {/* ICON */}
-
-                        <div className="
+            <div
+              className="
                             w-20
                             h-20
 
@@ -681,23 +591,22 @@ const MyUploadedNotes = () => {
                             justify-center
 
                             mb-5
-                        ">
-
-                            <FaFilePdf
-                                className="
+                        "
+            >
+              <FaFilePdf
+                className="
                                     text-red-500
                                     dark:text-red-400
 
                                     text-3xl
                                 "
-                            />
+              />
+            </div>
 
-                        </div>
+            {/* TITLE */}
 
-
-                        {/* TITLE */}
-
-                        <h2 className="
+            <h2
+              className="
                             text-xl
                             sm:text-2xl
 
@@ -705,14 +614,15 @@ const MyUploadedNotes = () => {
 
                             text-gray-900
                             dark:text-white
-                        ">
-                            No notes uploaded yet
-                        </h2>
+                        "
+            >
+              No notes uploaded yet
+            </h2>
 
+            {/* DESCRIPTION */}
 
-                        {/* DESCRIPTION */}
-
-                        <p className="
+            <p
+              className="
                             max-w-md
 
                             mx-auto
@@ -725,19 +635,17 @@ const MyUploadedNotes = () => {
 
                             mt-2
                             mb-7
-                        ">
-                            Share your study material with other
-                            students and start selling your notes.
-                        </p>
+                        "
+            >
+              Share your study material with other students and start selling
+              your notes.
+            </p>
 
+            {/* BUTTON */}
 
-                        {/* BUTTON */}
-
-                        <button
-                            onClick={() =>
-                                navigate("/sell-notes")
-                            }
-                            className="
+            <button
+              onClick={() => navigate("/sell-notes")}
+              className="
                                 inline-flex
 
                                 items-center
@@ -758,75 +666,64 @@ const MyUploadedNotes = () => {
                                 transition-all
                                 duration-200
                             "
-                        >
+            >
+              <FaPlus />
+              Upload Your First Note
+            </button>
+          </div>
+        )}
 
-                            <FaPlus />
+        {/* ================================================= */}
+        {/* NOTES SECTION */}
+        {/* ================================================= */}
 
-                            Upload Your First Note
+        {!loading && notes.length > 0 && (
+          <section>
+            {/* SECTION HEADER */}
 
-                        </button>
-
-                    </div>
-
-                )}
-
-
-                {/* ================================================= */}
-                {/* NOTES SECTION */}
-                {/* ================================================= */}
-
-                {!loading && notes.length > 0 && (
-
-                    <section>
-
-
-                        {/* SECTION HEADER */}
-
-                        <div className="
+            <div
+              className="
                             flex
                             items-center
                             justify-between
 
                             mb-5
-                        ">
-
-                            <div>
-
-                                <h2 className="
+                        "
+            >
+              <div>
+                <h2
+                  className="
                                     text-lg
 
                                     font-semibold
 
                                     text-gray-900
                                     dark:text-white
-                                ">
-                                    Your Notes
-                                </h2>
+                                "
+                >
+                  Your Notes
+                </h2>
 
-
-                                <p className="
+                <p
+                  className="
                                     text-sm
 
                                     text-gray-500
                                     dark:text-gray-400
-                                ">
-                                    {notes.length} note
-                                    {notes.length !== 1
-                                        ? "s"
-                                        : ""}{" "}
-                                    listed for sale
-                                </p>
+                                "
+                >
+                  {notes.length} note
+                  {notes.length !== 1 ? "s" : ""} listed for sale
+                </p>
+              </div>
+            </div>
 
-                            </div>
+            {/* ================================================= */}
+            {/* NOTE CARDS */}
+            {/* ================================================= */}
 
-                        </div>
-
-
-                        {/* ================================================= */}
-                        {/* NOTE CARDS */}
-                        {/* ================================================= */}
-
-                        <div className="
+            <div
+              className="
                             grid
 
                             grid-cols-1
@@ -834,16 +731,13 @@ const MyUploadedNotes = () => {
                             xl:grid-cols-3
 
                             gap-5
-                        ">
-
-
-                           {notes.map((note) => (
-    <div
-        key={note.id}
-        onClick={() =>
-            navigate(`/view-marketplace-note/${note.id}`)
-        }
-        className="
+                        "
+            >
+              {notes.map((note) => (
+                <div
+                  key={note.id}
+                  onClick={() => navigate(`/view-marketplace-note/${note.id}`)}
+                  className="
             group
             bg-white
             dark:bg-[#111c32]
@@ -870,32 +764,29 @@ const MyUploadedNotes = () => {
 
             cursor-pointer
         "
-    >
+                >
+                  {/* CARD TOP */}
 
-        {/* CARD TOP */}
-
-        <div
-            className="
+                  <div
+                    className="
                 flex
                 items-start
                 justify-between
                 gap-3
             "
-        >
+                  >
+                    {/* PDF + TITLE */}
 
-            {/* PDF + TITLE */}
-
-            <div
-                className="
+                    <div
+                      className="
                     flex
                     items-start
                     gap-3
                     min-w-0
                 "
-            >
-
-                <div
-                    className="
+                    >
+                      <div
+                        className="
                         shrink-0
 
                         w-12
@@ -910,23 +801,19 @@ const MyUploadedNotes = () => {
                         items-center
                         justify-center
                     "
-                >
-
-                    <FaFilePdf
-                        className="
+                      >
+                        <FaFilePdf
+                          className="
                             text-red-500
                             dark:text-red-400
                             text-xl
                         "
-                    />
+                        />
+                      </div>
 
-                </div>
-
-
-                <div className="min-w-0">
-
-                    <h3
-                        className="
+                      <div className="min-w-0">
+                        <h3
+                          className="
                             font-semibold
 
                             text-gray-900
@@ -934,13 +821,12 @@ const MyUploadedNotes = () => {
 
                             truncate
                         "
-                    >
-                        {note.title}
-                    </h3>
+                        >
+                          {note.title}
+                        </h3>
 
-
-                    <p
-                        className="
+                        <p
+                          className="
                             text-xs
 
                             text-gray-500
@@ -950,19 +836,16 @@ const MyUploadedNotes = () => {
 
                             truncate
                         "
-                    >
-                        {note.file_name}
-                    </p>
+                        >
+                          {note.file_name}
+                        </p>
+                      </div>
+                    </div>
 
-                </div>
+                    {/* PRICE */}
 
-            </div>
-
-
-            {/* PRICE */}
-
-            <span
-                className="
+                    <span
+                      className="
                     shrink-0
 
                     font-bold
@@ -970,20 +853,15 @@ const MyUploadedNotes = () => {
                     text-cyan-600
                     dark:text-cyan-400
                 "
-            >
-                ₹
-                {Number(
-                    note.price || 0
-                ).toFixed(2)}
-            </span>
+                    >
+                      ₹{Number(note.price || 0).toFixed(2)}
+                    </span>
+                  </div>
 
-        </div>
+                  {/* TAGS */}
 
-
-        {/* TAGS */}
-
-        <div
-            className="
+                  <div
+                    className="
                 flex
                 flex-wrap
 
@@ -991,10 +869,9 @@ const MyUploadedNotes = () => {
 
                 mt-5
             "
-        >
-
-            <span
-                className="
+                  >
+                    <span
+                      className="
                     px-3
                     py-1
 
@@ -1009,13 +886,12 @@ const MyUploadedNotes = () => {
                     text-cyan-700
                     dark:text-cyan-400
                 "
-            >
-                {note.subject}
-            </span>
+                    >
+                      {note.subject}
+                    </span>
 
-
-            <span
-                className="
+                    <span
+                      className="
                     px-3
                     py-1
 
@@ -1030,17 +906,15 @@ const MyUploadedNotes = () => {
                     text-purple-700
                     dark:text-purple-400
                 "
-            >
-                {note.unit}
-            </span>
+                    >
+                      {note.unit}
+                    </span>
+                  </div>
 
-        </div>
+                  {/* DESCRIPTION */}
 
-
-        {/* DESCRIPTION */}
-
-        <p
-            className="
+                  <p
+                    className="
                 text-sm
 
                 text-gray-600
@@ -1052,16 +926,14 @@ const MyUploadedNotes = () => {
 
                 line-clamp-2
             "
-        >
-            {note.description ||
-                "No description provided."}
-        </p>
+                  >
+                    {note.description || "No description provided."}
+                  </p>
 
+                  {/* DIVIDER */}
 
-        {/* DIVIDER */}
-
-        <div
-            className="
+                  <div
+                    className="
                 border-t
 
                 border-gray-200
@@ -1070,10 +942,9 @@ const MyUploadedNotes = () => {
                 mt-5
                 pt-4
             "
-        >
-
-            <div
-                className="
+                  >
+                    <div
+                      className="
                     flex
                     flex-col
                     sm:flex-row
@@ -1083,46 +954,39 @@ const MyUploadedNotes = () => {
 
                     gap-3
                 "
-            >
+                    >
+                      {/* DATE */}
 
-                {/* DATE */}
-
-                <span
-                    className="
+                      <span
+                        className="
                         text-xs
 
                         text-gray-500
                         dark:text-gray-400
                     "
-                >
-                    Uploaded{" "}
-                    {new Date(
-                        note.created_at
-                    ).toLocaleDateString()}
-                </span>
+                      >
+                        Uploaded{" "}
+                        {new Date(note.created_at).toLocaleDateString()}
+                      </span>
 
+                      {/* ACTIONS */}
 
-                {/* ACTIONS */}
-
-                <div
-                    className="
+                      <div
+                        className="
                         flex
                         items-center
                         gap-2
                     "
-                >
+                      >
+                        {/* EDIT */}
 
-                    {/* EDIT */}
-
-                    <button
-                        onClick={(e) => {
+                        <button
+                          onClick={(e) => {
                             e.stopPropagation();
 
-                            navigate(
-                                `/edit-marketplace-note/${note.id}`
-                            );
-                        }}
-                        className="
+                            navigate(`/edit-marketplace-note/${note.id}`);
+                          }}
+                          className="
                             flex
                             items-center
                             justify-center
@@ -1147,24 +1011,20 @@ const MyUploadedNotes = () => {
 
                             transition-colors
                         "
-                    >
+                        >
+                          <FaEdit />
+                          Edit
+                        </button>
 
-                        <FaEdit />
+                        {/* DELETE */}
 
-                        Edit
-
-                    </button>
-
-
-                    {/* DELETE */}
-
-                    <button
-                        onClick={(e) => {
+                        <button
+                          onClick={(e) => {
                             e.stopPropagation();
 
                             handleDelete(note.id);
-                        }}
-                        className="
+                          }}
+                          className="
                             flex
                             items-center
                             justify-center
@@ -1189,33 +1049,21 @@ const MyUploadedNotes = () => {
 
                             transition-colors
                         "
-                    >
-
-                        <FaTrash />
-
-                        Delete
-
-                    </button>
-
+                        >
+                          <FaTrash />
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-
+              ))}
             </div>
-
-        </div>
-
+          </section>
+        )}
+      </main>
     </div>
-))}
-
-                        </div>
-
-                    </section>
-
-                )}
-
-            </main>
-
-        </div>
-    );
+  );
 };
 
 export default MyUploadedNotes;

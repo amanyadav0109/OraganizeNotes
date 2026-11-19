@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import {
   BookOpen,
@@ -17,10 +16,9 @@ import ReminderCalendar from "../components/ReminderCalendar";
 import UpcomingReminders from "../components/UpcomingReminders";
 import DashboardChart from "../components/DashboardChart";
 import FindNotes from "../components/FindNotes";
-import { getDashboardStats,getRecentActivity, } from "../services/dashboardService";
+import { getDashboardStats } from "../services/dashboardService";
 import TodayTasks from "../components/TodayTasks";
 
-// New Dashboard Components
 import StudyProgress from "../components/StudyProgress";
 import QuickActions from "../components/QuickActions";
 import RecommendedPractice from "../components/RecommendedPractice";
@@ -46,10 +44,8 @@ function Dashboard() {
     }
   };
 
-
   useEffect(() => {
     loadStats();
-   
   }, []);
 
   return (
@@ -58,8 +54,6 @@ function Dashboard() {
       <Sidebar />
 
       <main className="lg:ml-56 p-4 sm:p-6 lg:p-8 pb-24 min-h-[calc(100vh-4rem)]">
-
-        {/* Welcome Banner */}
         <div className="rounded-2xl lg:rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-5 sm:p-7 lg:p-10 shadow-xl">
           <div className="flex flex-col lg:flex-row justify-between items-center gap-6">
             <div>
@@ -86,9 +80,7 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Statistics Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 mt-8">
-
           {[
             {
               title: "Subjects",
@@ -119,8 +111,10 @@ function Dashboard() {
 
             const colors = {
               blue: "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300",
-              green: "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300",
-              yellow: "bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300",
+              green:
+                "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300",
+              yellow:
+                "bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300",
               red: "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300",
             };
 
@@ -130,7 +124,9 @@ function Dashboard() {
                 className="bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl p-4 sm:p-5 lg:p-6 shadow-lg hover:shadow-2xl hover:-translate-y-1 transition"
               >
                 <div className="flex items-center justify-between">
-                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center ${colors[item.color]}`}>
+                  <div
+                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center ${colors[item.color]}`}
+                  >
                     <Icon size={22} />
                   </div>
 
@@ -147,9 +143,7 @@ function Dashboard() {
           })}
         </div>
 
-        {/* New Study Dashboard Section */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-
           <StudyProgress
             completed={stats.totalNotes}
             total={stats.totalNotes}
@@ -160,12 +154,9 @@ function Dashboard() {
           <WeeklyStudyActivity />
 
           <RecommendedPractice topics={[]} />
-
         </section>
 
-        {/* Notes Activity and Find Notes */}
         <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-stretch">
-
           <section className="w-full lg:w-1/2 bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8">
             <h2 className="text-lg sm:text-xl lg:text-2xl font-bold mb-5 dark:text-white">
               📈 Notes Activity
@@ -181,32 +172,25 @@ function Dashboard() {
           </section>
         </div>
 
-        {/* Calendar and Reminders */}
         <section className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8 mt-8 lg:mt-10 ">
-
           <div className="xl:col-span-2 flex flex-col gap-6">
-
             <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8">
               <h2 className="text-xl sm:text-2xl font-bold mb-5 dark:text-white">
                 📅 Calendar
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-[350px_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
-
                 <div className="min-w-0">
                   <ReminderCalendar />
                 </div>
-                 
+
                 <div className="min-w-0 h-full self-stretch flex">
                   <TodayTasks />
                 </div>
-
               </div>
             </div>
 
-            {/* Recently Completed */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-lg border border-slate-100 dark:border-slate-800 p-5 sm:p-6 flex flex-col h-[400px]">
-
               <div className="flex items-center justify-between mb-5 shrink-0">
                 <div>
                   <h2 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white">
@@ -226,20 +210,13 @@ function Dashboard() {
               <div className="flex-1 min-h-0 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-slate-100 dark:[&::-webkit-scrollbar-track]:bg-slate-800 [&::-webkit-scrollbar-thumb]:bg-slate-300 dark:[&::-webkit-scrollbar-thumb]:bg-slate-600 [&::-webkit-scrollbar-thumb]:rounded-full">
                 <CompletedTasks />
               </div>
-
             </div>
-
           </div>
 
-          {/* Upcoming Reminders */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl lg:rounded-3xl shadow-lg p-4 sm:p-6 lg:p-8 h-full">
             <UpcomingReminders />
           </div>
-
         </section>
-
-
-
       </main>
 
       <BottomNav />

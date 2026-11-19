@@ -7,7 +7,7 @@ import {
   getPracticeQuestions,
   getPracticeQuestionById,
   submitPracticeAnswer,
-  getPracticeCounts,
+  getPracticeCounts, accessPracticeQuestion,
 
 } from "../controllers/practiceController.js";
 
@@ -21,5 +21,5 @@ router.get("/questions", getPracticeQuestions);
 router.get("/questions/:id", getPracticeQuestionById);
 router.post("/submit", submitPracticeAnswer);
 router.get("/count", getPracticeCounts);
-
+router.post("/access/:id", accessPracticeQuestion);
 export default router;

@@ -24,14 +24,14 @@ function Pinned() {
     loadPinned();
   }, []);
 
-return (
-  <div className="page min-h-screen bg-gray-50 dark:bg-slate-950">
-    <Navbar />
+  return (
+    <div className="page min-h-screen bg-gray-50 dark:bg-slate-950">
+      <Navbar />
 
-    <Sidebar />
+      <Sidebar />
 
-    <main
-      className="
+      <main
+        className="
         ml-0
         md:ml-0
         lg:ml-56
@@ -50,9 +50,9 @@ return (
         transition-all
         duration-200
       "
-    >
-      <div
-        className="
+      >
+        <div
+          className="
           mb-6
           lg:mb-8
 
@@ -85,10 +85,10 @@ return (
 
           transition-colors
         "
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <div
-            className="
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              className="
               w-11
               h-11
               sm:w-12
@@ -112,13 +112,13 @@ return (
               text-xl
               sm:text-2xl
             "
-          >
-            📝
-          </div>
+            >
+              📝
+            </div>
 
-          <div className="min-w-0">
-            <h1
-              className="
+            <div className="min-w-0">
+              <h1
+                className="
                 text-xl
                 sm:text-2xl
                 md:text-3xl
@@ -128,12 +128,12 @@ return (
                 text-gray-900
                 dark:text-white
               "
-            >
-              Pinned Notes
-            </h1>
+              >
+                Pinned Notes
+              </h1>
 
-            <p
-              className="
+              <p
+                className="
                 mt-1
 
                 text-xs
@@ -142,16 +142,16 @@ return (
                 text-gray-500
                 dark:text-gray-400
               "
-            >
-              Manage and view all your Pinned notes
-            </p>
+              >
+                Manage and view all your Pinned notes
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {notes.length === 0 ? (
-        <div
-          className="
+        {notes.length === 0 ? (
+          <div
+            className="
             bg-white
             dark:bg-slate-900
 
@@ -169,18 +169,18 @@ return (
             shadow-sm
             dark:shadow-none
           "
-        >
-          <h2 className="text-xl sm:text-2xl font-semibold dark:text-white">
-            No Pinned Notes 📌
-          </h2>
+          >
+            <h2 className="text-xl sm:text-2xl font-semibold dark:text-white">
+              No Pinned Notes 📌
+            </h2>
 
-          <p className="text-gray-500 dark:text-gray-400 mt-3">
-            Pin your favorite notes to access them quickly.
-          </p>
-        </div>
-      ) : (
-        <div
-          className="
+            <p className="text-gray-500 dark:text-gray-400 mt-3">
+              Pin your favorite notes to access them quickly.
+            </p>
+          </div>
+        ) : (
+          <div
+            className="
             grid
             grid-cols-1
             sm:grid-cols-2
@@ -189,12 +189,12 @@ return (
             gap-4
             sm:gap-6
           "
-        >
-          {notes.map((note, index) => (
-            <div
-              key={note.id}
-              onClick={() => navigate(`/note/${note.id}`)}
-              className="
+          >
+            {notes.map((note, index) => (
+              <div
+                key={note.id}
+                onClick={() => navigate(`/note/${note.id}`)}
+                className="
                 bg-white
                 dark:bg-slate-800
 
@@ -219,11 +219,11 @@ return (
 
                 min-w-0
               "
-            >
-              <div className="flex items-start justify-between mb-5 gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <span
-                    className="
+              >
+                <div className="flex items-start justify-between mb-5 gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span
+                      className="
                       text-4xl
                       sm:text-5xl
 
@@ -234,13 +234,13 @@ return (
                       select-none
                       shrink-0
                     "
-                  >
-                    {(index + 1).toString().padStart(2, "0")}
-                  </span>
+                    >
+                      {(index + 1).toString().padStart(2, "0")}
+                    </span>
 
-                  <div className="min-w-0">
-                    <h2
-                      className="
+                    <div className="min-w-0">
+                      <h2
+                        className="
                         text-lg
                         sm:text-xl
 
@@ -253,37 +253,33 @@ return (
 
                         truncate
                       "
-                    >
-                      {note.title}
-                    </h2>
+                      >
+                        {note.title}
+                      </h2>
 
-                    <div className="w-full h-1 bg-blue-500 rounded-full mt-1"></div>
+                      <div className="w-full h-1 bg-blue-500 rounded-full mt-1"></div>
+                    </div>
                   </div>
+
+                  <span className="text-2xl shrink-0">📌</span>
                 </div>
 
-                <span className="text-2xl shrink-0">
-                  📌
-                </span>
-              </div>
+                <div className="flex items-center gap-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
+                  {note.filePath ? (
+                    <>
+                      <span className="text-red-500">📄</span>
+                      <span className="font-medium">PDF Note Attached</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-blue-500">📝</span>
+                      <span className="font-medium">Text Note</span>
+                    </>
+                  )}
+                </div>
 
-           <div className="flex items-center gap-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
-  {note.filePath ? (
-    <>
-      <span className="text-red-500">📄</span>
-      <span className="font-medium">PDF Note Attached</span>
-    </>
-  ) : (
-    <>
-      <span className="text-blue-500">📝</span>
-      <span className="font-medium">Text Note</span>
-    </>
-  )}
-</div>
-
-            
-
-              <div
-                className="
+                <div
+                  className="
                   mt-5
                   pt-4
 
@@ -293,37 +289,36 @@ return (
 
                   space-y-2
                 "
-              >
-                {note.dueDate && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    📅 Due :{" "}
-                    {new Date(note.dueDate).toLocaleDateString()}
+                >
+                  {note.dueDate && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      📅 Due : {new Date(note.dueDate).toLocaleDateString()}
+                    </p>
+                  )}
+
+                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                    📚 Subject :
+                    <span className="font-semibold text-blue-600 dark:text-blue-400">
+                      {" "}
+                      {note.subjectName || "Unknown"}
+                    </span>
                   </p>
-                )}
 
-                <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                  📚 Subject :
-                  <span className="font-semibold text-blue-600 dark:text-blue-400">
-                    {" "}
-                    {note.subjectName || "Unknown"}
-                  </span>
-                </p>
-
-                <div className="flex justify-end pt-2">
-                  <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-                    View Details →
-                  </span>
+                  <div className="flex justify-end pt-2">
+                    <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                      View Details →
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
 
-      <BottomNav />
-    </main>
-  </div>
-);
+        <BottomNav />
+      </main>
+    </div>
+  );
 }
 
 export default Pinned;

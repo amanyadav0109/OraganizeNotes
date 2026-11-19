@@ -1,6 +1,5 @@
 
 import { useEffect, useMemo, useState } from "react";
-
 import {
   CalendarDays,
   BookOpen,
@@ -18,9 +17,9 @@ import {
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import BottomNav from "../components/BottomNav";
-
+import { toast } from "react-toastify";
 function RevisionPlan() {
-  // Read mock test attempts
+  
   const [attempts] = useState(() => {
     try {
       return JSON.parse(
@@ -31,7 +30,6 @@ function RevisionPlan() {
     }
   });
 
-  // Read saved revision schedule
   const [sessions, setSessions] = useState(() => {
     try {
       return JSON.parse(
@@ -54,7 +52,6 @@ function RevisionPlan() {
     time: "18:00"
   });
 
-  // Save schedule automatically
   useEffect(() => {
   localStorage.setItem(
     "revisionSessions",
@@ -73,7 +70,7 @@ function RevisionPlan() {
     );
   }, [dailyGoal]);
 
-  // Calculate subject-wise performance
+
   const recommendations = useMemo(() => {
     const subjectMap = {};
 
@@ -108,13 +105,12 @@ function RevisionPlan() {
     (item) => item.accuracy < 70
   );
 
-  // If all subjects have good accuracy, show the lowest-scoring subjects
   const suggestedSubjects =
     weakSubjects.length > 0
       ? weakSubjects
       : recommendations.slice(0, 3);
 
-  // Statistics
+
   const totalSessions = sessions.length;
 
   const completedSessions = sessions.filter(
@@ -169,14 +165,14 @@ function RevisionPlan() {
     );
 
     if (alreadyAdded) {
-      alert("This subject is already in your revision schedule.");
+      toast.info("This subject is already in your revision schedule.");
       return;
     }
 
     addSession(subject.subject);
   };
 
-  // Mark session complete
+ 
   const toggleComplete = (id) => {
     setSessions((prev) =>
       prev.map((item) =>

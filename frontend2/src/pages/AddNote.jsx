@@ -1,122 +1,114 @@
-
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-
+import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import BottomNav from "../components/BottomNav";
 
 function AddNote() {
-    const { id } = useParams();
-    const navigate = useNavigate();
+  const { id } = useParams();
+  const navigate = useNavigate();
 
-    const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
-    const [title, setTitle] = useState("");
-    const [content, setContent] = useState("");
-    const [reminder, setReminder] = useState("");
-    const [pdfFile, setPdfFile] = useState(null);
-    const [loading, setLoading] = useState(false);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [reminder, setReminder] = useState("");
+  const [pdfFile, setPdfFile] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-    const handlePdfChange = (e) => {
-        const file = e.target.files?.[0];
+  const handlePdfChange = (e) => {
+    const file = e.target.files?.[0];
 
-        if (!file) return;
+    if (!file) return;
 
-        if (
-            file.type !== "application/pdf" &&
-            !file.name.toLowerCase().endsWith(".pdf")
-        ) {
-            alert("Please select a PDF file only.");
-            e.target.value = "";
-            return;
-        }
+    if (
+      file.type !== "application/pdf" &&
+      !file.name.toLowerCase().endsWith(".pdf")
+    ) {
+      toast.error("Please select a PDF file only.");
+      e.target.value = "";
+      return;
+    }
 
-        if (file.size > 10 * 1024 * 1024) {
-            alert("PDF size should be less than 10 MB.");
-            e.target.value = "";
-            return;
-        }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("PDF size should be less than 10 MB.");
+      e.target.value = "";
+      return;
+    }
 
-        setPdfFile(file);
-    };
+    setPdfFile(file);
+  };
 
-    const removePdf = () => {
-        setPdfFile(null);
+  const removePdf = () => {
+    setPdfFile(null);
 
-        const input = document.getElementById("pdf-upload");
+    const input = document.getElementById("pdf-upload");
 
-        if (input) {
-            input.value = "";
-        }
-    };
+    if (input) {
+      input.value = "";
+    }
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        const trimmedTitle = title.trim();
-        const trimmedContent = content.trim();
+    const trimmedTitle = title.trim();
+    const trimmedContent = content.trim();
 
-        const hasContent = trimmedContent.length > 0;
-        const hasPdf = Boolean(pdfFile);
+    const hasContent = trimmedContent.length > 0;
+    const hasPdf = Boolean(pdfFile);
 
-        if (!trimmedTitle) {
-            alert("Please enter note title.");
-            return;
-        }
+    if (!trimmedTitle) {
+      toast.error("Please enter note title.");
+      return;
+    }
 
-        if (!hasContent && !hasPdf) {
-            alert("Please write note content or attach a PDF.");
-            return;
-        }
+    if (!hasContent && !hasPdf) {
+      toast.error("Please write note content or attach a PDF.");
+      return;
+    }
 
-        try {
-            setLoading(true);
+    try {
+      setLoading(true);
 
-            const formData = new FormData();
+      const formData = new FormData();
 
-            formData.append("title", trimmedTitle);
-            formData.append("content", trimmedContent);
-            formData.append("subjectId", id);
-            formData.append("dueDate", reminder || "");
+      formData.append("title", trimmedTitle);
+      formData.append("content", trimmedContent);
+      formData.append("subjectId", id);
+      formData.append("dueDate", reminder || "");
 
-            if (pdfFile) {
-                formData.append("pdf", pdfFile);
-            }
+      if (pdfFile) {
+        formData.append("pdf", pdfFile);
+      }
 
-            await axios.post(
-                "http://localhost:5000/api/notes/create",
-                formData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
+      await axios.post("http://localhost:5000/api/notes/create", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-            alert("Note created successfully!");
+      toast.success("Note created successfully!");
 
-            navigate(`/subject/${id}`);
-        } catch (error) {
-            console.error("CREATE NOTE ERROR:", error);
+      navigate(`/subject/${id}`);
+    } catch (error) {
+      console.error("CREATE NOTE ERROR:", error);
 
-            alert(
-                error.response?.data?.message ||
-                "Failed to create note"
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
+      toast.error(error.response?.data?.message || "Failed to create note");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors">
-            <Navbar />
-            <Sidebar />
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors">
+      <Navbar />
+      <Sidebar />
 
-            <main
-                className="
+      <main
+        className="
                     ml-0
     lg:ml-[215px]
 
@@ -136,9 +128,9 @@ function AddNote() {
     transition-all
     duration-200
                 "
-            >
-                <div
-                    className="
+      >
+        <div
+          className="
                         mb-5
                         sm:mb-6
                         lg:mb-8
@@ -161,50 +153,35 @@ function AddNote() {
 
                         py-4
                         sm:py-5
-                        lg:py-6
+                      lg:py-6
 
                         shadow-sm
                         dark:shadow-none
-
-                        transition-colors
-                    "
-                >
-                    <button
-                        type="button"
-                        onClick={() => navigate(`/subject/${id}`)}
-                        className="
-                            inline-flex
+                        transition-colors                "
+        >
+          <button
+            type="button"
+            onClick={() => navigate(`/subject/${id}`)}
+            className="inline-flex
                             items-center
                             gap-2
-
                             mb-4
                             sm:mb-5
-
                             text-sm
                             sm:text-base
-
                             font-medium
-
                             text-gray-500
                             dark:text-gray-400
-
                             hover:text-blue-600
                             dark:hover:text-blue-400
-
                             transition-colors
                         "
-                    >
-                        <span className="text-lg sm:text-xl">
-                            ←
-                        </span>
-
-                        <span>
-                            Back to Subject
-                        </span>
-                    </button>
-
-                    <div
-                        className="
+          >
+            <span className="text-lg sm:text-xl">←</span>
+            <span>Back to Subject</span>
+          </button>
+          <div
+            className="
                             flex
                             flex-col
                             sm:flex-row
@@ -213,40 +190,32 @@ function AddNote() {
                             gap-3
                             sm:gap-4
                         "
-                    >
-                        <div
-                            className="
+          >
+            <div
+              className="
                                 w-11
                                 h-11
-
                                 sm:w-14
                                 sm:h-14
-
                                 shrink-0
-
                                 flex
                                 items-center
                                 justify-center
-
                                 rounded-xl
-
                                 bg-blue-50
                                 dark:bg-blue-500/10
-
                                 border
                                 border-blue-100
                                 dark:border-blue-500/20
-
                                 text-xl
                                 sm:text-2xl
-                            "
-                        >
-                            📝
-                        </div>
+                            ">
+              📝
+            </div>
 
-                        <div className="min-w-0">
-                            <h1
-                                className="
+            <div className="min-w-0">
+              <h1
+                className="
                                     text-2xl
                                     sm:text-3xl
                                     lg:text-4xl
@@ -257,31 +226,28 @@ function AddNote() {
                                     text-gray-900
                                     dark:text-white
                                 "
-                            >
-                                Add New Note
-                            </h1>
+              >
+                Add New Note
+              </h1>
 
-                            <p
-                                className="
-                                    mt-1
+              <p
+                className=" mt-1
                                     sm:mt-1.5
-
                                     text-sm
                                     sm:text-base
-
                                     text-gray-500
                                     dark:text-gray-400
                                 "
-                            >
-                                Create a new study note for this subject.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+              >
+                Create a new study note for this subject.
+              </p>
+            </div>
+          </div>
+        </div>
 
-                <form
-                    onSubmit={handleSubmit}
-                    className="
+        <form
+          onSubmit={handleSubmit}
+          className="
                         w-full
                         min-w-0
 
@@ -304,10 +270,10 @@ function AddNote() {
 
                         transition-colors
                     "
-                >
-                    <div className="mb-6">
-                        <label
-                            className="
+        >
+          <div className="mb-6">
+            <label
+              className="
                                 block
                                 mb-2
 
@@ -319,16 +285,16 @@ function AddNote() {
                                 text-gray-800
                                 dark:text-gray-200
                             "
-                        >
-                            Note Title
-                        </label>
+            >
+              Note Title
+            </label>
 
-                        <input
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder="Enter note title..."
-                            className="
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter note title..."
+              className="
                                 w-full
                                 min-w-0
 
@@ -363,12 +329,12 @@ function AddNote() {
 
                                 transition
                             "
-                        />
-                    </div>
+            />
+          </div>
 
-                    <div className="mb-6">
-                        <div
-                            className="
+          <div className="mb-6">
+            <div
+              className="
                                 mb-2
 
                                 flex
@@ -380,9 +346,9 @@ function AddNote() {
 
                                 gap-1
                             "
-                        >
-                            <label
-                                className="
+            >
+              <label
+                className="
                                     text-sm
                                     sm:text-base
 
@@ -391,28 +357,28 @@ function AddNote() {
                                     text-gray-800
                                     dark:text-gray-200
                                 "
-                            >
-                                Note Content
-                            </label>
+              >
+                Note Content
+              </label>
 
-                            <span
-                                className="
+              <span
+                className="
                                     text-xs
                                     sm:text-sm
 
                                     text-gray-400
                                     dark:text-gray-500
                                 "
-                            >
-                                Optional if PDF is attached
-                            </span>
-                        </div>
+              >
+                Optional if PDF is attached
+              </span>
+            </div>
 
-                        <textarea
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            placeholder="Write your notes here..."
-                            className="
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Write your notes here..."
+              className="
                                 w-full
                                 min-w-0
 
@@ -451,21 +417,21 @@ function AddNote() {
 
                                 transition
                             "
-                        />
-                    </div>
+            />
+          </div>
 
-                    <div
-                        className="
+          <div
+            className="
                             flex
                             items-center
                             gap-3
                             my-6
                         "
-                    >
-                        <div className="flex-1 h-px bg-gray-200 dark:bg-slate-800" />
+          >
+            <div className="flex-1 h-px bg-gray-200 dark:bg-slate-800" />
 
-                        <span
-                            className="
+            <span
+              className="
                                 text-xs
                                 sm:text-sm
 
@@ -474,16 +440,16 @@ function AddNote() {
                                 text-gray-400
                                 dark:text-gray-500
                             "
-                        >
-                            OR
-                        </span>
+            >
+              OR
+            </span>
 
-                        <div className="flex-1 h-px bg-gray-200 dark:bg-slate-800" />
-                    </div>
+            <div className="flex-1 h-px bg-gray-200 dark:bg-slate-800" />
+          </div>
 
-                    <div className="mb-6">
-                        <label
-                            className="
+          <div className="mb-6">
+            <label
+              className="
                                 block
                                 mb-2
 
@@ -495,14 +461,14 @@ function AddNote() {
                                 text-gray-800
                                 dark:text-gray-200
                             "
-                        >
-                            Attach PDF
-                        </label>
+            >
+              Attach PDF
+            </label>
 
-                        {!pdfFile ? (
-                            <label
-                                htmlFor="pdf-upload"
-                                className="
+            {!pdfFile ? (
+              <label
+                htmlFor="pdf-upload"
+                className="
                                     flex
                                     flex-col
                                     items-center
@@ -537,9 +503,9 @@ function AddNote() {
 
                                     transition
                                 "
-                            >
-                                <div
-                                    className="
+              >
+                <div
+                  className="
                                         w-12
                                         h-12
 
@@ -554,12 +520,12 @@ function AddNote() {
 
                                         text-2xl
                                     "
-                                >
-                                    📄
-                                </div>
+                >
+                  📄
+                </div>
 
-                                <p
-                                    className="
+                <p
+                  className="
                                         mt-3
 
                                         text-sm
@@ -572,12 +538,12 @@ function AddNote() {
 
                                         text-center
                                     "
-                                >
-                                    Click to upload PDF
-                                </p>
+                >
+                  Click to upload PDF
+                </p>
 
-                                <p
-                                    className="
+                <p
+                  className="
                                         mt-1
 
                                         text-xs
@@ -588,13 +554,13 @@ function AddNote() {
 
                                         text-center
                                     "
-                                >
-                                    PDF only • Maximum 10 MB
-                                </p>
-                            </label>
-                        ) : (
-                            <div
-                                className="
+                >
+                  PDF only • Maximum 10 MB
+                </p>
+              </label>
+            ) : (
+              <div
+                className="
                                     w-full
 
                                     flex
@@ -617,18 +583,18 @@ function AddNote() {
                                     bg-green-50
                                     dark:bg-green-500/10
                                 "
-                            >
-                                <div
-                                    className="
+              >
+                <div
+                  className="
                                         flex
                                         items-center
                                         gap-3
 
                                         min-w-0
                                     "
-                                >
-                                    <div
-                                        className="
+                >
+                  <div
+                    className="
                                             w-10
                                             h-10
 
@@ -645,13 +611,13 @@ function AddNote() {
 
                                             text-xl
                                         "
-                                    >
-                                        📄
-                                    </div>
+                  >
+                    📄
+                  </div>
 
-                                    <div className="min-w-0">
-                                        <p
-                                            className="
+                  <div className="min-w-0">
+                    <p
+                      className="
                                                 text-sm
                                                 sm:text-base
 
@@ -662,27 +628,27 @@ function AddNote() {
 
                                                 truncate
                                             "
-                                        >
-                                            {pdfFile.name}
-                                        </p>
+                    >
+                      {pdfFile.name}
+                    </p>
 
-                                        <p
-                                            className="
+                    <p
+                      className="
                                                 text-xs
 
                                                 text-gray-500
                                                 dark:text-gray-400
                                             "
-                                        >
-                                            {(pdfFile.size / 1024 / 1024).toFixed(2)} MB
-                                        </p>
-                                    </div>
-                                </div>
+                    >
+                      {(pdfFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                </div>
 
-                                <button
-                                    type="button"
-                                    onClick={removePdf}
-                                    className="
+                <button
+                  type="button"
+                  onClick={removePdf}
+                  className="
                                         shrink-0
 
                                         px-4
@@ -704,24 +670,24 @@ function AddNote() {
 
                                         transition
                                     "
-                                >
-                                    Remove
-                                </button>
-                            </div>
-                        )}
+                >
+                  Remove
+                </button>
+              </div>
+            )}
 
-                        <input
-                            id="pdf-upload"
-                            type="file"
-                            accept="application/pdf,.pdf"
-                            onChange={handlePdfChange}
-                            className="hidden"
-                        />
-                    </div>
+            <input
+              id="pdf-upload"
+              type="file"
+              accept="application/pdf,.pdf"
+              onChange={handlePdfChange}
+              className="hidden"
+            />
+          </div>
 
-                    <div className="mb-8">
-                        <label
-                            className="
+          <div className="mb-8">
+            <label
+              className="
                                 block
                                 mb-2
 
@@ -733,15 +699,15 @@ function AddNote() {
                                 text-gray-800
                                 dark:text-gray-200
                             "
-                        >
-                            Reminder
-                        </label>
+            >
+              Reminder
+            </label>
 
-                        <input
-                            type="datetime-local"
-                            value={reminder}
-                            onChange={(e) => setReminder(e.target.value)}
-                            className="
+            <input
+              type="datetime-local"
+              value={reminder}
+              onChange={(e) => setReminder(e.target.value)}
+              className="
                                 w-full
                                 sm:max-w-md
 
@@ -772,11 +738,11 @@ function AddNote() {
 
                                 transition
                             "
-                        />
-                    </div>
+            />
+          </div>
 
-                    <div
-                        className="
+          <div
+            className="
                             flex
                             flex-col-reverse
                             sm:flex-row
@@ -785,12 +751,12 @@ function AddNote() {
 
                             gap-3
                         "
-                    >
-                        <button
-                            type="button"
-                            onClick={() => navigate(`/subject/${id}`)}
-                            disabled={loading}
-                            className="
+          >
+            <button
+              type="button"
+              onClick={() => navigate(`/subject/${id}`)}
+              disabled={loading}
+              className="
                                 w-full
                                 sm:w-auto
 
@@ -818,14 +784,14 @@ function AddNote() {
 
                                 disabled:opacity-50
                             "
-                        >
-                            Cancel
-                        </button>
+            >
+              Cancel
+            </button>
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="
+            <button
+              type="submit"
+              disabled={loading}
+              className="
                                 w-full
                                 sm:w-auto
 
@@ -854,16 +820,16 @@ function AddNote() {
                                 disabled:opacity-60
                                 disabled:cursor-not-allowed
                             "
-                        >
-                            {loading ? "Creating..." : "Create Note"}
-                        </button>
-                    </div>
-                </form>
-            </main>
+            >
+              {loading ? "Creating..." : "Create Note"}
+            </button>
+          </div>
+        </form>
+      </main>
 
-            <BottomNav />
-        </div>
-    );
+      <BottomNav />
+    </div>
+  );
 }
 
 export default AddNote;

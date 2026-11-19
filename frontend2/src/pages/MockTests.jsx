@@ -20,7 +20,7 @@ import {
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import BottomNav from "../components/BottomNav";
-
+import { toast } from "react-toastify";
 import TestInstructions from "../components/mocktests/TestInstructions";
 import ExamScreen from "../components/mocktests/ExamScreen";
 import ResultScreen from "../components/mocktests/ResultScreen";
@@ -59,7 +59,7 @@ function MockTests() {
   const [error, setError] = useState("");
   const [questionsError, setQuestionsError] = useState("");
 
-  // Previous attempts
+
   const [attempts, setAttempts] = useState(() => {
     try {
       return JSON.parse(
@@ -70,7 +70,7 @@ function MockTests() {
     }
   });
 
-  // API request
+ 
   const apiRequest = async (endpoint) => {
     const response = await fetch(
       `${API_URL}/api/mock-tests${endpoint}`
@@ -87,7 +87,6 @@ function MockTests() {
     return data;
   };
 
-  // Load categories
   const loadCategories = useCallback(async () => {
     try {
       setLoading(true);
@@ -107,7 +106,6 @@ function MockTests() {
     loadCategories();
   }, [loadCategories]);
 
-  // Load subjects
   const openCategory = async (category) => {
     try {
       setSelectedCategory(category);
@@ -136,7 +134,7 @@ function MockTests() {
     }
   };
 
-  // Load topics
+ 
   const openSubject = async (subject) => {
     try {
       setSelectedSubject(subject);
@@ -163,7 +161,7 @@ function MockTests() {
     }
   };
 
-  // Load test sets
+ 
   const openTopic = async (topic) => {
     try {
       setSelectedTopic(topic);
@@ -193,7 +191,7 @@ function MockTests() {
     }
   };
 
-  // Load actual questions from database
+ 
   const openTest = async (test, language = "English") => {
     try {
       setSelectedTest(test);
@@ -225,7 +223,7 @@ function MockTests() {
     }
   };
 
-  // Start exam
+  
   const startExam = () => {
     if (examQuestions.length === 0) {
       setQuestionsError("No questions available.");
@@ -235,7 +233,7 @@ function MockTests() {
     setScreen("exam");
   };
 
-  // Save exam result
+ 
   const handleExamSubmit = (result) => {
     const totalMarks =
       Number(result.totalMarks) ||
@@ -279,7 +277,7 @@ function MockTests() {
     setScreen("result");
   };
 
-  // Back navigation
+ 
   const goBack = () => {
     if (screen === "subjects") {
       setScreen("categories");
@@ -298,7 +296,7 @@ function MockTests() {
       setSelectedTest(null);
       setExamQuestions([]);
     } else if (screen === "exam") {
-      // Exam should normally be submitted, not abandoned.
+ 
       setScreen("instructions");
     } else if (screen === "result") {
       resetToCategories();
@@ -324,7 +322,7 @@ function MockTests() {
     setQuestionsError("");
   };
 
-  // Page title
+
   const pageTitle = () => {
     switch (screen) {
       case "categories":
@@ -348,7 +346,7 @@ function MockTests() {
     }
   };
 
-  // Refresh current screen
+
   const refreshCurrentScreen = () => {
     if (screen === "categories") {
       loadCategories();
@@ -365,10 +363,7 @@ function MockTests() {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       <Navbar />
       <Sidebar />
-
       <main className="p-4 pb-28 sm:p-6 lg:ml-56 lg:p-8">
-
-        {/* Hero */}
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-indigo-600 to-purple-700 p-6 text-white shadow-xl sm:p-9">
           <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/10 blur-2xl" />
 

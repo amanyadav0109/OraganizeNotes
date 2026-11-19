@@ -439,4 +439,183 @@ export const getPracticeCounts = async (req, res) => {
 };
 
 
+// CHECK AND RECORD PRACTICE QUESTION ACCESS
+export const accessPracticeQuestion = async (req, res) => {
+  let connection;
+
+  try {
+    const userId = req.userId;
+    const { id } = req.params;
+    const { practiceType } = req.body;
+
+    if (!["descriptive", "mcq"].includes(practiceType)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid practice type.",
+      });
+    }
+
+    connection = await db.promise().getConnection();
+    await connection.beginTransaction();
+
+    // Lock user row to prevent simultaneous quota bypass
+    const [users] = await connection.query(
+      `SELECT plan FROM users WHERE id = ? FOR UPDATE`,
+      [userId]
+    );
+
+    if (!users.length) {
+      await connection.rollback();
+
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    const isPremium =
+      String(users[0].plan || "").toLowerCase() === "premium";
+
+    // Verify question and its type
+    const [questions] = await connection.query(
+      `SELECT id, type
+       FROM practice_questions
+       WHERE id = ? AND type = ?
+       LIMIT 1`,
+      [id, practiceType]
+    );
+
+    if (!questions.length) {
+      await connection.rollback();
+
+      return res.status(404).json({
+        success: false,
+        message: "Question not found.",
+      });
+    }
+
+    // Premium users have unlimited access
+    if (isPremium) {
+      await connection.commit();
+
+      return res.status(200).json({
+        success: true,
+        allowed: true,
+        premium: true,
+        message: "Unlimited access granted.",
+      });
+    }
+
+    // Check whether this question was already accessed
+    // within the last 24 hours
+    const [existingAccess] = await connection.query(
+      `SELECT id
+       FROM practice_question_accesses
+       WHERE user_id = ?
+         AND question_id = ?
+         AND practice_type = ?
+         AND accessed_at >= NOW() - INTERVAL 24 HOUR
+       LIMIT 1`,
+      [userId, id, practiceType]
+    );
+
+    // Reopening the same question does not consume another slot
+    if (existingAccess.length > 0) {
+      const [countRows] = await connection.query(
+        `SELECT COUNT(DISTINCT question_id) AS used
+         FROM practice_question_accesses
+         WHERE user_id = ?
+           AND practice_type = ?
+           AND accessed_at >= NOW() - INTERVAL 24 HOUR`,
+        [userId, practiceType]
+      );
+
+      await connection.commit();
+
+      return res.status(200).json({
+        success: true,
+        allowed: true,
+        premium: false,
+        used: Number(countRows[0].used),
+        limit: 10,
+        remaining: Math.max(0, 10 - Number(countRows[0].used)),
+      });
+    }
+
+    // Count unique questions accessed in this practice category
+    const [countRows] = await connection.query(
+      `SELECT
+          COUNT(DISTINCT question_id) AS used,
+          MIN(accessed_at) AS oldestAccess
+       FROM practice_question_accesses
+       WHERE user_id = ?
+         AND practice_type = ?
+         AND accessed_at >= NOW() - INTERVAL 24 HOUR`,
+      [userId, practiceType]
+    );
+
+    const used = Number(countRows[0].used || 0);
+
+    // Free limit reached
+    if (used >= 10) {
+      const resetAt = countRows[0].oldestAccess
+        ? new Date(
+            new Date(countRows[0].oldestAccess).getTime() +
+            24 * 60 * 60 * 1000
+          )
+        : null;
+
+      await connection.commit();
+
+      return res.status(403).json({
+        success: false,
+        allowed: false,
+        code: "DAILY_PRACTICE_LIMIT_REACHED",
+        used,
+        limit: 10,
+        remaining: 0,
+        resetAt,
+        message: "Daily practice limit reached. Upgrade to Premium for unlimited access.",
+      });
+    }
+
+    // Record this question access
+    await connection.query(
+      `INSERT INTO practice_question_accesses
+        (user_id, question_id, practice_type)
+       VALUES (?, ?, ?)`,
+      [userId, id, practiceType]
+    );
+
+    await connection.commit();
+
+    res.status(200).json({
+      success: true,
+      allowed: true,
+      premium: false,
+      used: used + 1,
+      limit: 10,
+      remaining: 10 - (used + 1),
+    });
+
+  } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+
+    console.error("ACCESS PRACTICE QUESTION:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to verify practice access.",
+    });
+
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
+};
+
+
 

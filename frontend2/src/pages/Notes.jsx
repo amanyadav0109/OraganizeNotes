@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import BottomNav from "../components/BottomNav";
@@ -24,14 +24,14 @@ function Notes() {
     loadNotes();
   }, []);
 
-return (
-  <div className="page bg-gray-50 dark:bg-slate-950">
-    <Navbar />
+  return (
+    <div className="page bg-gray-50 dark:bg-slate-950">
+      <Navbar />
 
-    <Sidebar />
+      <Sidebar />
 
-    <main
-      className="
+      <main
+        className="
         lg:ml-56
         
         p-4
@@ -40,10 +40,9 @@ return (
         pb-24
         min-h-[calc(100vh-4rem)]
       "
-    >
-
-      <div
-        className="
+      >
+        <div
+          className="
           mb-6
           lg:mb-8
 
@@ -76,11 +75,10 @@ return (
 
           transition-colors
         "
-      >
-        <div className="flex items-center gap-3 min-w-0">
-
-          <div
-            className="
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              className="
               w-11
               h-11
               sm:w-12
@@ -104,14 +102,13 @@ return (
               text-xl
               sm:text-2xl
             "
-          >
-            📝
-          </div>
+            >
+              📝
+            </div>
 
-          <div className="min-w-0">
-
-            <h1
-              className="
+            <div className="min-w-0">
+              <h1
+                className="
                 text-xl
                 sm:text-2xl
                 md:text-3xl
@@ -121,12 +118,12 @@ return (
                 text-gray-900
                 dark:text-white
               "
-            >
-              All Notes
-            </h1>
+              >
+                All Notes
+              </h1>
 
-            <p
-              className="
+              <p
+                className="
                 mt-1
 
                 text-xs
@@ -135,38 +132,30 @@ return (
                 text-gray-500
                 dark:text-gray-400
               "
-            >
-              Manage and view all your notes
-            </p>
-
+              >
+                Manage and view all your notes
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {notes.length === 0 ? (
+        {notes.length === 0 ? (
+          <div className="card p-8 sm:p-10 lg:p-12 text-center">
+            <h2 className="text-xl sm:text-2xl font-semibold">
+              No Notes Found 📚
+            </h2>
 
-        <div className="card p-8 sm:p-10 lg:p-12 text-center">
-
-          <h2 className="text-xl sm:text-2xl font-semibold">
-            No Notes Found 📚
-          </h2>
-
-          <p className="text-gray-500 dark:text-gray-400 mt-3 text-sm sm:text-base">
-            Create your first note.
-          </p>
-
-        </div>
-
-      ) : (
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-
-          {notes.map((note, index) => (
-
-            <div
-              key={note.id}
-              onClick={() => navigate(`/note/${note.id}`)}
-              className="
+            <p className="text-gray-500 dark:text-gray-400 mt-3 text-sm sm:text-base">
+              Create your first note.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+            {notes.map((note, index) => (
+              <div
+                key={note.id}
+                onClick={() => navigate(`/note/${note.id}`)}
+                className="
                 bg-white
                 dark:bg-slate-800
                 border
@@ -183,83 +172,64 @@ return (
                 duration-300
                 cursor-pointer
               "
-            >
+              >
+                <div className="flex items-center gap-3 sm:gap-4 mb-4">
+                  <span className="text-4xl sm:text-5xl font-extrabold text-blue-500/20 select-none">
+                    {(index + 1).toString().padStart(2, "0")}
+                  </span>
 
-              <div className="flex items-center gap-3 sm:gap-4 mb-4">
+                  <div className="min-w-0">
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white capitalize truncate">
+                      {note.title}
+                    </h2>
 
-                <span className="text-4xl sm:text-5xl font-extrabold text-blue-500/20 select-none">
-                  {(index + 1).toString().padStart(2, "0")}
-                </span>
-
-                <div className="min-w-0">
-
-                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white capitalize truncate">
-                    {note.title}
-                  </h2>
-
-                  <div className="w-full h-1 bg-blue-500 rounded-full mt-1"></div>
-
+                    <div className="w-full h-1 bg-blue-500 rounded-full mt-1"></div>
+                  </div>
                 </div>
 
-              </div>
+                <div className="flex items-center gap-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
+                  {note.filePath ? (
+                    <>
+                      <span className="text-red-500">📄</span>
+                      <span className="font-medium">PDF Note Attached</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-blue-500">📝</span>
+                      <span className="font-medium">Text Note</span>
+                    </>
+                  )}
+                </div>
 
-              <div className="flex items-center gap-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
-  {note.filePath ? (
-    <>
-      <span className="text-red-500">📄</span>
-      <span className="font-medium">PDF Note Attached</span>
-    </>
-  ) : (
-    <>
-      <span className="text-blue-500">📝</span>
-      <span className="font-medium">Text Note</span>
-    </>
-  )}
-</div>
+                <div className="mt-5 pt-4 border-t border-gray-200 dark:border-slate-700 space-y-2">
+                  {note.dueDate && (
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                      📅 Due: {new Date(note.dueDate).toLocaleDateString()}
+                    </p>
+                  )}
 
-
-              <div className="mt-5 pt-4 border-t border-gray-200 dark:border-slate-700 space-y-2">
-
-                {note.dueDate && (
-
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                    📅 Due:{" "}
-                    {new Date(note.dueDate).toLocaleDateString()}
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
+                    📚 Subject:
+                    <span className="ml-1 font-semibold text-blue-600 dark:text-blue-400">
+                      {note.subjectName || "Unknown"}
+                    </span>
                   </p>
 
-                )}
-
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
-                  📚 Subject:
-                  <span className="ml-1 font-semibold text-blue-600 dark:text-blue-400">
-                    {note.subjectName || "Unknown"}
-                  </span>
-                </p>
-
-                <div className="pt-2 flex justify-end">
-
-                  <span className="text-blue-600 dark:text-blue-400 text-xs sm:text-sm font-semibold">
-                    View Details →
-                  </span>
-
+                  <div className="pt-2 flex justify-end">
+                    <span className="text-blue-600 dark:text-blue-400 text-xs sm:text-sm font-semibold">
+                      View Details →
+                    </span>
+                  </div>
                 </div>
-
               </div>
+            ))}
+          </div>
+        )}
+      </main>
 
-            </div>
-
-          ))}
-
-        </div>
-
-      )}
-
-    </main>
-
-    <BottomNav />
-
-  </div>
-);
+      <BottomNav />
+    </div>
+  );
 }
 
 export default Notes;

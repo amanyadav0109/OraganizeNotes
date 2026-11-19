@@ -1,51 +1,44 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { toast } from "react-toastify";
 import BottomNav from "../components/BottomNav";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 
 function FindNotes() {
   const navigate = useNavigate();
-
   const [notes, setNotes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   const loadNotes = async () => {
     try {
       setLoading(true);
       setError("");
-
-     const response = await fetch(
-  `${import.meta.env.VITE_SERVER_URL}/api/marketplace`
-);
-
+      const response = await fetch(
+        `${import.meta.env.VITE_SERVER_URL}/api/marketplace`,
+      );
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.message || "Failed to load notes");
       }
-
       setNotes(data.notes || []);
     } catch (err) {
       console.log("FETCH MARKETPLACE ERROR:", err);
       setError("Unable to load notes. Please try again.");
+      toast.error("Failed to load notes");
     } finally {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     loadNotes();
   }, []);
 
   const filteredNotes = notes.filter((note) => {
     const search = searchTerm.toLowerCase().trim();
-
     if (!search) return true;
-
     return (
       note.title?.toLowerCase().includes(search) ||
       note.subject?.toLowerCase().includes(search) ||
@@ -54,16 +47,10 @@ function FindNotes() {
       note.seller_name?.toLowerCase().includes(search)
     );
   });
-
   return (
     <div className="page min-h-screen bg-gray-50 dark:bg-slate-950">
-      {/* Navbar */}
       <Navbar />
-
-      {/* Sidebar */}
       <Sidebar />
-
-      {/* Main Content */}
       <main
         className="
           lg:ml-56
@@ -74,16 +61,12 @@ function FindNotes() {
           min-h-[calc(100vh-4rem)]
         "
       >
-        {/* =================================
-            PAGE HEADER
-        ================================= */}
-<div
-    className="
+        <div
+          className="
         mb-6
         lg:mb-8
-
         bg-white
-        dark:bg-slate-900
+      dark:bg-slate-900
 
         border
         border-gray-200
@@ -111,11 +94,10 @@ function FindNotes() {
 
         transition-colors
     "
->
-    <div className="flex items-center gap-3 min-w-0">
-
-        <div
-            className="
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              className="
                 w-11
                 h-11
                 sm:w-12
@@ -139,13 +121,12 @@ function FindNotes() {
                 text-xl
                 sm:text-2xl
             "
-        >
-            📝
-        </div>
+            >
+              📝
+            </div>
 
-        <div className="min-w-0">
-
-            <h1
+            <div className="min-w-0">
+              <h1
                 className="
                     text-xl
                     sm:text-2xl
@@ -156,11 +137,11 @@ function FindNotes() {
                     text-gray-900
                     dark:text-white
                 "
-            >
-               📚 Find Your Notes
-            </h1>
+              >
+                📚 Find Your Notes
+              </h1>
 
-            <p
+              <p
                 className="
                     mt-1
 
@@ -170,18 +151,12 @@ function FindNotes() {
                     text-gray-500
                     dark:text-gray-400
                 "
-            >
+              >
                 Discover and purchase useful notes from other students.
-            </p>
-
+              </p>
+            </div>
+          </div>
         </div>
-    </div>
-</div>
-
-        {/* =================================
-            MAIN CARD
-        ================================= */}
-
         <div
           className="
             card
@@ -197,8 +172,6 @@ function FindNotes() {
             lg:p-8
           "
         >
-          {/* SEARCH */}
-
           <div className="relative mb-6">
             <span
               className="
@@ -241,18 +214,12 @@ function FindNotes() {
             />
           </div>
 
-          {/* RESULT COUNT */}
-
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
             <span className="font-semibold text-blue-600 dark:text-blue-400">
               {filteredNotes.length}
             </span>{" "}
             {filteredNotes.length === 1 ? "note" : "notes"} available
           </p>
-
-          {/* =================================
-              LOADING
-          ================================= */}
 
           {loading && (
             <div className="flex justify-center items-center py-20">
@@ -277,17 +244,11 @@ function FindNotes() {
             </div>
           )}
 
-          {/* =================================
-              ERROR
-          ================================= */}
-
           {!loading && error && (
             <div className="text-center py-16">
               <div className="text-4xl mb-4">⚠️</div>
 
-              <p className="text-red-500 dark:text-red-400">
-                {error}
-              </p>
+              <p className="text-red-500 dark:text-red-400">{error}</p>
 
               <button
                 onClick={loadNotes}
@@ -307,10 +268,6 @@ function FindNotes() {
               </button>
             </div>
           )}
-
-          {/* =================================
-              NO NOTES
-          ================================= */}
 
           {!loading && !error && filteredNotes.length === 0 && (
             <div className="text-center py-16">
@@ -341,10 +298,6 @@ function FindNotes() {
             </div>
           )}
 
-          {/* =================================
-              NOTES
-          ================================= */}
-
           {!loading && !error && filteredNotes.length > 0 && (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
               {filteredNotes.map((note) => (
@@ -367,8 +320,6 @@ function FindNotes() {
                     duration-300
                   "
                 >
-                  {/* TITLE */}
-
                   <h2
                     className="
                       text-lg
@@ -380,8 +331,6 @@ function FindNotes() {
                   >
                     {note.title}
                   </h2>
-
-                  {/* SUBJECT + UNIT */}
 
                   <div className="flex flex-wrap gap-2 mt-3">
                     <span
@@ -415,8 +364,6 @@ function FindNotes() {
                     </span>
                   </div>
 
-                  {/* DESCRIPTION */}
-
                   <p
                     className="
                       text-sm
@@ -430,16 +377,12 @@ function FindNotes() {
                     {note.description}
                   </p>
 
-                  {/* SELLER */}
-
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
                     👤 Seller:{" "}
                     <span className="font-semibold text-gray-700 dark:text-gray-200">
                       {note.seller_name}
                     </span>
                   </p>
-
-                  {/* BOTTOM */}
 
                   <div
                     className="
@@ -456,8 +399,6 @@ function FindNotes() {
                       dark:border-slate-700
                     "
                   >
-                    {/* PRICE */}
-
                     <div>
                       <p className="text-xl font-bold text-gray-900 dark:text-white">
                         ₹{Number(note.price).toFixed(2)}
@@ -468,13 +409,9 @@ function FindNotes() {
                       </p>
                     </div>
 
-                    {/* GET NOTES */}
-
                     <button
                       type="button"
-                      onClick={() =>
-                        navigate(`/get-notes/${note.id}`)
-                      }
+                      onClick={() => navigate(`/get-notes/${note.id}`)}
                       className="
                         w-full
                         sm:w-auto
@@ -501,7 +438,6 @@ function FindNotes() {
           )}
         </div>
 
-        {/* Mobile Bottom Navigation */}
         <BottomNav />
       </main>
     </div>

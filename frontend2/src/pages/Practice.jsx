@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   ChevronDown,
@@ -25,45 +26,48 @@ import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import BottomNav from "../components/BottomNav";
 import api from "../services/api";
+import { toast } from "react-toastify";
 
 function Practice() {
-  // SUBJECTS
+  const navigate = useNavigate();
+
   const [subjects, setSubjects] = useState([]);
   const [subjectId, setSubjectId] = useState("");
   const [subjectName, setSubjectName] = useState("");
 
-  // TOPICS
   const [topics, setTopics] = useState([]);
   const [selectedTopics, setSelectedTopics] = useState([]);
   const [topicSearch, setTopicSearch] = useState("");
   const [showTopicDropdown, setShowTopicDropdown] = useState(false);
 
-  // QUESTIONS
   const [questions, setQuestions] = useState([]);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
 
-  // ANSWER SCREEN
   const [writtenAnswer, setWrittenAnswer] = useState("");
   const [showAnswer, setShowAnswer] = useState(false);
   const [checkingAnswer, setCheckingAnswer] = useState(false);
 
-  // FILTERS
   const [search, setSearch] = useState("");
   const [difficulty, setDifficulty] = useState("All");
   const [status, setStatus] = useState("All");
   const [sortBy, setSortBy] = useState("Newest");
 
-  // UI
   const [view, setView] = useState("list");
   const [bookmarked, setBookmarked] = useState([]);
 
-  // LOADING / ERROR
   const [loadingSubjects, setLoadingSubjects] = useState(true);
   const [loadingTopics, setLoadingTopics] = useState(false);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [openingQuestion, setOpeningQuestion] = useState(false);
+  const [practiceLimitReached, setPracticeLimitReached] = useState(false);
   const [error, setError] = useState("");
 
-  // PAGINATION
+  const [practiceUsage, setPracticeUsage] = useState({
+    used: 0,
+    limit: 10,
+    remaining: 10,
+  });
+
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({
     total: 0,
@@ -72,9 +76,6 @@ function Practice() {
     limit: 20,
   });
 
-  // ---------------------------------------------
-  // GET SUBJECTS
-  // ---------------------------------------------
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
@@ -99,8 +100,7 @@ function Practice() {
       } catch (err) {
         console.error("SUBJECT ERROR:", err);
         setError(
-          err.response?.data?.message ||
-            "Unable to load practice subjects."
+          err.response?.data?.message || "Unable to load practice subjects."
         );
       } finally {
         setLoadingSubjects(false);
@@ -110,9 +110,6 @@ function Practice() {
     fetchSubjects();
   }, []);
 
-  // ---------------------------------------------
-  // GET TOPICS
-  // ---------------------------------------------
   useEffect(() => {
     if (!subjectId) {
       setTopics([]);
@@ -123,9 +120,7 @@ function Practice() {
       try {
         setLoadingTopics(true);
 
-        const response = await api.get(
-          `/practice/topics/${subjectId}`
-        );
+        const response = await api.get(`/practice/topics/${subjectId}`);
 
         const data = Array.isArray(response.data)
           ? response.data
@@ -135,10 +130,7 @@ function Practice() {
       } catch (err) {
         console.error("TOPIC ERROR:", err);
         setTopics([]);
-        setError(
-          err.response?.data?.message ||
-            "Unable to load topics."
-        );
+        setError(err.response?.data?.message || "Unable to load topics.");
       } finally {
         setLoadingTopics(false);
       }
@@ -147,9 +139,6 @@ function Practice() {
     fetchTopics();
   }, [subjectId]);
 
-  // ---------------------------------------------
-  // GET QUESTIONS FROM DATABASE
-  // ---------------------------------------------
   useEffect(() => {
     if (!subjectId) {
       setQuestions([]);
@@ -172,8 +161,7 @@ function Practice() {
           page,
           limit: 20,
           search: search.trim(),
-          difficulty:
-            difficulty === "All" ? "" : difficulty,
+          difficulty: difficulty === "All" ? "" : difficulty,
           status: status === "All" ? "" : status,
           sort: sortBy,
         };
@@ -182,10 +170,7 @@ function Practice() {
           params.topics = selectedTopics.join(",");
         }
 
-        const response = await api.get(
-          "/practice/questions",
-          { params }
-        );
+        const response = await api.get("/practice/questions", { params });
 
         const data = Array.isArray(response.data)
           ? response.data
@@ -206,29 +191,15 @@ function Practice() {
       } catch (err) {
         console.error("QUESTION ERROR:", err);
         setQuestions([]);
-        setError(
-          err.response?.data?.message ||
-            "Unable to load questions."
-        );
+        setError(err.response?.data?.message || "Unable to load questions.");
       } finally {
         setLoadingQuestions(false);
       }
     };
 
     fetchQuestions();
-  }, [
-    subjectId,
-    selectedTopics,
-    search,
-    difficulty,
-    status,
-    sortBy,
-    page,
-  ]);
+  }, [subjectId, selectedTopics, search, difficulty, status, sortBy, page]);
 
-  // ---------------------------------------------
-  // SUBJECT CHANGE
-  // ---------------------------------------------
   const handleSubjectChange = (value) => {
     const selectedSubject = subjects.find(
       (item) => String(item.id) === String(value)
@@ -242,13 +213,8 @@ function Practice() {
     setPage(1);
   };
 
-  // ---------------------------------------------
-  // TOPIC FILTER
-  // ---------------------------------------------
   const filteredTopics = topics.filter((topic) =>
-    topic.name
-      ?.toLowerCase()
-      .includes(topicSearch.toLowerCase())
+    topic.name?.toLowerCase().includes(topicSearch.toLowerCase())
   );
 
   const toggleTopic = (topicId) => {
@@ -278,9 +244,6 @@ function Practice() {
     return topic?.name || "";
   };
 
-  // ---------------------------------------------
-  // CLEAR FILTERS
-  // ---------------------------------------------
   const clearFilters = () => {
     setSearch("");
     setSelectedTopics([]);
@@ -290,9 +253,6 @@ function Practice() {
     setPage(1);
   };
 
-  // ---------------------------------------------
-  // BOOKMARK
-  // ---------------------------------------------
   const toggleBookmark = (id) => {
     setBookmarked((prev) =>
       prev.includes(id)
@@ -301,98 +261,145 @@ function Practice() {
     );
   };
 
-  // ---------------------------------------------
-  // OPEN QUESTION SCREEN
-  // ---------------------------------------------
-  const openQuestion = (question) => {
-    setSelectedQuestion(question);
-    setWrittenAnswer("");
-    setShowAnswer(false);
-    setCheckingAnswer(false);
+  const openQuestion = async (question) => {
+    if (openingQuestion) return;
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    try {
+      setOpeningQuestion(true);
+
+      const response = await api.post(
+        `/practice/access/${question.id}`,
+        {
+          practiceType: "descriptive",
+        }
+      );
+
+      if (!response.data?.success || !response.data?.allowed) {
+        throw new Error("Unable to access this question.");
+      }
+
+      if (!response.data.premium) {
+        setPracticeUsage({
+          used: response.data.used,
+          limit: response.data.limit,
+          remaining: response.data.remaining,
+        });
+      }
+
+      setPracticeLimitReached(false);
+      setSelectedQuestion(question);
+      setWrittenAnswer("");
+      setShowAnswer(false);
+      setCheckingAnswer(false);
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    } catch (err) {
+     console.error("PRACTICE ACCESS ERROR:", err);
+console.log("STATUS:", err.response?.status);
+console.log("ERROR RESPONSE:", err.response?.data);
+console.log("REQUEST URL:", err.config?.url);
+
+      if (
+        err.response?.status === 403 &&
+        err.response?.data?.code === "DAILY_PRACTICE_LIMIT_REACHED"
+      ) {
+        setPracticeLimitReached(true);
+
+        setPracticeUsage({
+          used: err.response.data.used || 10,
+          limit: err.response.data.limit || 10,
+          remaining: 0,
+        });
+
+        toast.error(
+          "Daily Descriptive Practice limit reached! You have used all 10 free questions. Upgrade to Premium for unlimited practice.",
+          {
+            position: "top-right",
+            autoClose: 5000,
+            theme: "colored",
+          }
+        );
+
+        return;
+      }
+
+      toast.error(
+        err.response?.data?.message ||
+          "Unable to open question. Please try again.",
+        {
+          position: "top-right",
+          autoClose: 4000,
+          theme: "colored",
+        }
+      );
+    } finally {
+      setOpeningQuestion(false);
+    }
   };
 
-  // ---------------------------------------------
-  // CHECK / SHOW CORRECT ANSWER
-  // ---------------------------------------------
-const handleCheckAnswer = async () => {
-  if (!selectedQuestion?.id) return;
+  const handleCheckAnswer = async () => {
+    if (!selectedQuestion?.id) return;
 
-  if (showAnswer) {
-    setShowAnswer(false);
-    return;
-  }
-
-  if (!writtenAnswer.trim()) {
-    alert("Please write your answer first.");
-    return;
-  }
-
-  try {
-    setCheckingAnswer(true);
-    setError("");
-
-    const response = await api.get(
-      `/practice/questions/${selectedQuestion.id}`
-    );
-
-  console.log(
-  "PRACTICE ANSWER API:",
-  JSON.stringify(response.data, null, 2)
-);
-
-console.log("API BASE URL:", api.defaults.baseURL);
-console.log("QUESTION ID:", selectedQuestion.id);
-
-    if (!response.data?.success || !response.data?.question) {
-      throw new Error(
-        response.data?.message || "Unable to fetch correct answer."
-      );
+    if (showAnswer) {
+      setShowAnswer(false);
+      return;
     }
 
-    const questionData = response.data.question;
+    if (!writtenAnswer.trim()) {
+      toast.error("Please write your answer first.");
+      return;
+    }
 
-    const correctAnswer =
-      questionData.correctAnswer ??
-      questionData.correct_answer ??
-      "";
+    try {
+      setCheckingAnswer(true);
+      setError("");
 
-    const explanation =
-      questionData.explanation ?? "";
+      const response = await api.get(
+        `/practice/questions/${selectedQuestion.id}`
+      );
 
-    console.log("FETCHED CORRECT ANSWER:", correctAnswer);
-    console.log("FETCHED EXPLANATION:", explanation);
+      if (!response.data?.success || !response.data?.question) {
+        throw new Error(
+          response.data?.message || "Unable to fetch correct answer."
+        );
+      }
 
-    setSelectedQuestion((prev) => ({
-      ...prev,
-      ...questionData,
-      correctAnswer,
-      explanation,
-    }));
+      const questionData = response.data.question;
 
-    setShowAnswer(true);
+      const correctAnswer =
+        questionData.correctAnswer ?? questionData.correct_answer ?? "";
 
-  } catch (err) {
-    console.error("CHECK ANSWER ERROR:", err);
+      const explanation = questionData.explanation ?? "";
 
-    alert(
-      err.response?.data?.message ||
-        err.message ||
-        "Unable to load correct answer."
-    );
+      setSelectedQuestion((prev) => ({
+        ...prev,
+        ...questionData,
+        correctAnswer,
+        explanation,
+      }));
 
-  } finally {
-    setCheckingAnswer(false);
-  }
-};
- 
-  // ---------------------------------------------
-  // CLOSE QUESTION SCREEN
-  // ---------------------------------------------
+      setShowAnswer(true);
+    } catch (err) {
+      console.error("CHECK ANSWER ERROR:", err);
+
+      toast.error(
+        err.response?.data?.message ||
+          err.message ||
+          "Unable to load correct answer.",
+        {
+          position: "top-right",
+          autoClose: 4000,
+          theme: "colored",
+        }
+      );
+    } finally {
+      setCheckingAnswer(false);
+    }
+  };
+
   const closeQuestion = () => {
     setSelectedQuestion(null);
     setWrittenAnswer("");
@@ -400,38 +407,27 @@ console.log("QUESTION ID:", selectedQuestion.id);
     setCheckingAnswer(false);
   };
 
-  // ---------------------------------------------
-  // PREVIOUS / NEXT QUESTION
-  // ---------------------------------------------
   const currentQuestionIndex = questions.findIndex(
-    (item) =>
-      Number(item.id) === Number(selectedQuestion?.id)
+    (item) => Number(item.id) === Number(selectedQuestion?.id)
   );
 
   const goToQuestion = (direction) => {
     const nextIndex = currentQuestionIndex + direction;
 
-    if (
-      nextIndex < 0 ||
-      nextIndex >= questions.length
-    ) {
+    if (nextIndex < 0 || nextIndex >= questions.length) {
       return;
     }
 
     openQuestion(questions[nextIndex]);
   };
 
-  // ---------------------------------------------
-  // QUESTION SCREEN
-  // ---------------------------------------------
   if (selectedQuestion) {
     const correctAnswer =
       selectedQuestion.correctAnswer ||
       selectedQuestion.correct_answer ||
       "";
 
-    const explanation =
-      selectedQuestion.explanation || "";
+    const explanation = selectedQuestion.explanation || "";
 
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
@@ -440,8 +436,6 @@ console.log("QUESTION ID:", selectedQuestion.id);
 
         <main className="min-h-screen p-4 pb-24 sm:p-6 lg:ml-56 lg:p-8">
           <div className="mx-auto max-w-5xl">
-
-            {/* TOP NAVIGATION */}
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <button
                 onClick={closeQuestion}
@@ -456,7 +450,6 @@ console.log("QUESTION ID:", selectedQuestion.id);
               </span>
             </div>
 
-            {/* QUESTION HEADER */}
             <div className="mb-5 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-7">
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
@@ -477,9 +470,7 @@ console.log("QUESTION ID:", selectedQuestion.id);
                 </div>
 
                 <button
-                  onClick={() =>
-                    toggleBookmark(selectedQuestion.id)
-                  }
+                  onClick={() => toggleBookmark(selectedQuestion.id)}
                   className="rounded-xl border border-gray-200 p-2.5 text-gray-500 transition hover:bg-gray-100 dark:border-slate-700 dark:hover:bg-slate-800"
                   title="Bookmark question"
                 >
@@ -499,8 +490,7 @@ console.log("QUESTION ID:", selectedQuestion.id);
               </p>
 
               <h1 className="text-xl font-bold leading-relaxed text-gray-900 dark:text-white sm:text-2xl">
-                {selectedQuestion.question ||
-                  selectedQuestion.title}
+                {selectedQuestion.question || selectedQuestion.title}
               </h1>
 
               <div className="mt-6 flex items-center gap-2 border-t border-gray-100 pt-4 text-xs text-gray-500 dark:border-slate-800">
@@ -509,7 +499,6 @@ console.log("QUESTION ID:", selectedQuestion.id);
               </div>
             </div>
 
-            {/* WRITE ANSWER */}
             <div className="mb-5 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-7">
               <div className="mb-4 flex items-center gap-2">
                 <div className="rounded-lg bg-green-50 p-2 dark:bg-green-900/20">
@@ -534,7 +523,6 @@ console.log("QUESTION ID:", selectedQuestion.id);
                 onChange={(e) => {
                   setWrittenAnswer(e.target.value);
 
-                  // Hide the previous answer if student edits their response.
                   if (showAnswer) {
                     setShowAnswer(false);
                   }
@@ -551,9 +539,7 @@ console.log("QUESTION ID:", selectedQuestion.id);
 
                 <button
                   onClick={handleCheckAnswer}
-                  disabled={
-                    !writtenAnswer.trim() || checkingAnswer
-                  }
+                  disabled={!writtenAnswer.trim() || checkingAnswer}
                   className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {checkingAnswer ? (
@@ -576,12 +562,11 @@ console.log("QUESTION ID:", selectedQuestion.id);
               </div>
 
               <p className="mt-3 text-xs text-gray-400">
-                Self-practice mode: compare your response with
-                the correct answer after writing it.
+                Self-practice mode: compare your response with the correct
+                answer after writing it.
               </p>
             </div>
 
-            {/* CORRECT ANSWER AND EXPLANATION */}
             {showAnswer && (
               <div className="mb-5 space-y-4">
                 <div className="rounded-2xl border border-green-200 bg-white p-5 shadow-sm dark:border-green-900/50 dark:bg-slate-900 sm:p-7">
@@ -604,8 +589,8 @@ console.log("QUESTION ID:", selectedQuestion.id);
                     </div>
                   ) : (
                     <p className="text-sm text-amber-600">
-                      Correct answer is not available. Please
-                      check the answer saved from the admin panel.
+                      Correct answer is not available. Please check the answer
+                      saved from the admin panel.
                     </p>
                   )}
                 </div>
@@ -637,11 +622,10 @@ console.log("QUESTION ID:", selectedQuestion.id);
               </div>
             )}
 
-            {/* QUESTION NAVIGATION */}
             <div className="flex items-center justify-between gap-3">
               <button
                 onClick={() => goToQuestion(-1)}
-                disabled={currentQuestionIndex <= 0}
+                disabled={currentQuestionIndex <= 0 || openingQuestion}
                 className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-200 dark:hover:bg-slate-800"
               >
                 <ArrowLeft size={17} />
@@ -658,7 +642,8 @@ console.log("QUESTION ID:", selectedQuestion.id);
                 onClick={() => goToQuestion(1)}
                 disabled={
                   currentQuestionIndex < 0 ||
-                  currentQuestionIndex >= questions.length - 1
+                  currentQuestionIndex >= questions.length - 1 ||
+                  openingQuestion
                 }
                 className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
@@ -674,9 +659,6 @@ console.log("QUESTION ID:", selectedQuestion.id);
     );
   }
 
-  // ---------------------------------------------
-  // MAIN PRACTICE PAGE
-  // ---------------------------------------------
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       <Navbar />
@@ -685,10 +667,7 @@ console.log("QUESTION ID:", selectedQuestion.id);
       <main className="p-4 pb-24 sm:p-6 lg:ml-56 lg:p-8">
         <div className="mb-7 flex items-center gap-3">
           <div className="rounded-2xl bg-blue-100 p-3 dark:bg-blue-900/30">
-            <Code2
-              size={28}
-              className="text-blue-600 dark:text-blue-400"
-            />
+            <Code2 size={28} className="text-blue-600 dark:text-blue-400" />
           </div>
 
           <div>
@@ -696,13 +675,12 @@ console.log("QUESTION ID:", selectedQuestion.id);
               Practice Zone
             </h1>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Practice descriptive questions and improve your
-              understanding topic by topic.
+              Practice descriptive questions and improve your understanding
+              topic by topic.
             </p>
           </div>
         </div>
 
-        {/* ERROR */}
         {error && (
           <div className="mb-5 flex items-center justify-between rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400">
             {error}
@@ -712,7 +690,6 @@ console.log("QUESTION ID:", selectedQuestion.id);
           </div>
         )}
 
-        {/* FILTER PANEL */}
         <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -750,7 +727,6 @@ console.log("QUESTION ID:", selectedQuestion.id);
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            {/* SEARCH */}
             <div className="relative">
               <Search
                 size={17}
@@ -767,13 +743,10 @@ console.log("QUESTION ID:", selectedQuestion.id);
               />
             </div>
 
-            {/* SUBJECT */}
             <div className="relative">
               <select
                 value={subjectId}
-                onChange={(e) =>
-                  handleSubjectChange(e.target.value)
-                }
+                onChange={(e) => handleSubjectChange(e.target.value)}
                 disabled={loadingSubjects}
                 className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-3 py-3 pr-9 text-sm text-gray-800 outline-none focus:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               >
@@ -796,12 +769,9 @@ console.log("QUESTION ID:", selectedQuestion.id);
               />
             </div>
 
-            {/* TOPIC */}
             <div className="relative">
               <button
-                onClick={() =>
-                  setShowTopicDropdown((prev) => !prev)
-                }
+                onClick={() => setShowTopicDropdown((prev) => !prev)}
                 className="flex w-full items-center justify-between rounded-xl border border-gray-200 px-3 py-3 text-sm text-gray-700 dark:border-slate-700 dark:text-gray-300"
               >
                 <span className="flex items-center gap-2">
@@ -825,9 +795,7 @@ console.log("QUESTION ID:", selectedQuestion.id);
                     />
                     <input
                       value={topicSearch}
-                      onChange={(e) =>
-                        setTopicSearch(e.target.value)
-                      }
+                      onChange={(e) => setTopicSearch(e.target.value)}
                       placeholder="Search topics..."
                       className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-9 pr-2 text-sm outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                     />
@@ -846,12 +814,8 @@ console.log("QUESTION ID:", selectedQuestion.id);
                         >
                           <input
                             type="checkbox"
-                            checked={selectedTopics.includes(
-                              Number(topic.id)
-                            )}
-                            onChange={() =>
-                              toggleTopic(topic.id)
-                            }
+                            checked={selectedTopics.includes(Number(topic.id))}
+                            onChange={() => toggleTopic(topic.id)}
                             className="h-4 w-4 accent-blue-600"
                           />
                           {topic.name}
@@ -876,9 +840,7 @@ console.log("QUESTION ID:", selectedQuestion.id);
                     </button>
 
                     <button
-                      onClick={() =>
-                        setShowTopicDropdown(false)
-                      }
+                      onClick={() => setShowTopicDropdown(false)}
                       className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white"
                     >
                       Apply
@@ -888,7 +850,6 @@ console.log("QUESTION ID:", selectedQuestion.id);
               )}
             </div>
 
-            {/* DIFFICULTY */}
             <div className="relative">
               <select
                 value={difficulty}
@@ -910,7 +871,6 @@ console.log("QUESTION ID:", selectedQuestion.id);
               />
             </div>
 
-            {/* STATUS */}
             <div className="relative">
               <select
                 value={status}
@@ -932,7 +892,6 @@ console.log("QUESTION ID:", selectedQuestion.id);
             </div>
           </div>
 
-          {/* SELECTED FILTERS */}
           <div className="mt-5 flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold text-gray-500">
               Selected:
@@ -965,7 +924,31 @@ console.log("QUESTION ID:", selectedQuestion.id);
           </div>
         </section>
 
-        {/* QUESTIONS SECTION */}
+        {practiceLimitReached && (
+          <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900/50 dark:bg-amber-900/20">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  Daily Practice Limit Reached
+                </h3>
+
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                  You have used {practiceUsage.used} out of{" "}
+                  {practiceUsage.limit} free descriptive questions.
+                  Upgrade to Premium for unlimited practice.
+                </p>
+              </div>
+
+              <button
+                onClick={() => navigate("/upgrade")}
+                className="shrink-0 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-700"
+              >
+                Upgrade to Premium
+              </button>
+            </div>
+          </div>
+        )}
+
         <section className="mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 p-4 dark:border-slate-800 sm:p-5">
             <div>
@@ -988,13 +971,10 @@ console.log("QUESTION ID:", selectedQuestion.id);
             >
               <option value="Newest">Sort: Newest</option>
               <option value="Difficulty">Sort: Difficulty</option>
-              <option value="Most Attempted">
-                Sort: Most Attempted
-              </option>
+              <option value="Most Attempted">Sort: Most Attempted</option>
             </select>
           </div>
 
-          {/* LOADING */}
           {loadingQuestions ? (
             <div className="flex flex-col items-center justify-center px-5 py-16 text-center">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
@@ -1004,11 +984,7 @@ console.log("QUESTION ID:", selectedQuestion.id);
             </div>
           ) : questions.length > 0 ? (
             <div
-              className={
-                view === "grid"
-                  ? "grid gap-3 p-4 sm:grid-cols-2"
-                  : ""
-              }
+              className={view === "grid" ? "grid gap-3 p-4 sm:grid-cols-2" : ""}
             >
               {questions.map((question) => (
                 <div
@@ -1021,19 +997,14 @@ console.log("QUESTION ID:", selectedQuestion.id);
                 >
                   <button
                     onClick={() => openQuestion(question)}
-                    className="flex min-w-0 flex-1 items-start gap-3 text-left"
+                    disabled={openingQuestion}
+                    className="flex min-w-0 flex-1 items-start gap-3 text-left disabled:cursor-wait disabled:opacity-60"
                   >
                     <div className="mt-1 shrink-0">
                       {question.isSolved ? (
-                        <CheckCircle2
-                          className="text-green-500"
-                          size={20}
-                        />
+                        <CheckCircle2 className="text-green-500" size={20} />
                       ) : (
-                        <Circle
-                          className="text-gray-400"
-                          size={20}
-                        />
+                        <Circle className="text-gray-400" size={20} />
                       )}
                     </div>
 
@@ -1062,24 +1033,19 @@ console.log("QUESTION ID:", selectedQuestion.id);
                         question.difficulty === "Easy"
                           ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                           : question.difficulty === "Hard"
-                          ? "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-                          : "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                            ? "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                            : "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                       }`}
                     >
                       {question.difficulty || "Medium"}
                     </span>
 
                     <span className="text-xs text-gray-500">
-                      {question.attemptCount ??
-                        question.attempts ??
-                        0}{" "}
-                      attempts
+                      {question.attemptCount ?? question.attempts ?? 0} attempts
                     </span>
 
                     <button
-                      onClick={() =>
-                        toggleBookmark(question.id)
-                      }
+                      onClick={() => toggleBookmark(question.id)}
                       className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-blue-600 dark:hover:bg-slate-800"
                       title="Bookmark"
                     >
@@ -1095,9 +1061,10 @@ console.log("QUESTION ID:", selectedQuestion.id);
 
                     <button
                       onClick={() => openQuestion(question)}
-                      className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700"
+                      disabled={openingQuestion}
+                      className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-wait disabled:opacity-50"
                     >
-                      Practice
+                      {openingQuestion ? "Opening..." : "Practice"}
                     </button>
                   </div>
                 </div>
@@ -1117,36 +1084,29 @@ console.log("QUESTION ID:", selectedQuestion.id);
               </h3>
 
               <p className="mt-2 max-w-md text-sm leading-6 text-gray-500 dark:text-gray-400">
-                No descriptive questions were found for the
-                selected filters. Try changing your filters or
-                check back later.
+                No descriptive questions were found for the selected filters.
+                Try changing your filters or check back later.
               </p>
             </div>
           )}
 
-          {/* PAGINATION */}
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-between border-t border-gray-200 p-4 dark:border-slate-800">
               <button
                 disabled={page <= 1}
-                onClick={() =>
-                  setPage((prev) => prev - 1)
-                }
+                onClick={() => setPage((prev) => prev - 1)}
                 className="rounded-lg border border-gray-200 px-4 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700"
               >
                 Previous
               </button>
 
               <span className="text-xs text-gray-500">
-                Page {pagination.page || page} of{" "}
-                {pagination.totalPages}
+                Page {pagination.page || page} of {pagination.totalPages}
               </span>
 
               <button
                 disabled={page >= pagination.totalPages}
-                onClick={() =>
-                  setPage((prev) => prev + 1)
-                }
+                onClick={() => setPage((prev) => prev + 1)}
                 className="rounded-lg border border-gray-200 px-4 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700"
               >
                 Next

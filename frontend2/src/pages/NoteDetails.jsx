@@ -10,6 +10,7 @@ import { exportNotePDF } from "../utils/pdfExport";
 import { getSingleNote, deleteNote } from "../services/noteService";
 import { Share2 } from "lucide-react";
 import BottomNav from "../components/BottomNav";
+import { toast } from "react-toastify";
 import axios from "axios";
 import {
   FaEdit,
@@ -22,7 +23,7 @@ function NoteDetails() {
   const { id } = useParams();
 
   const navigate = useNavigate();
-const [pdfUrl, setPdfUrl] = useState(null);
+  const [pdfUrl, setPdfUrl] = useState(null);
   const [note, setNote] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
@@ -31,49 +32,48 @@ const [pdfUrl, setPdfUrl] = useState(null);
   const [selectedContent, setSelectedContent] = useState("");
   const loadNote = async () => {
     try {
-        const data = await getSingleNote(id);
+      const data = await getSingleNote(id);
 
-        setNote(data);
+      setNote(data);
 
-        if (data.filePath) {
-            const token = localStorage.getItem("token");
+      if (data.filePath) {
+        const token = localStorage.getItem("token");
 
-            const response = await axios.get(
-                `http://localhost:5000/api/notes/pdf/${id}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    },
-                    responseType: "blob"
-                }
-            );
+        const response = await axios.get(
+          `http://localhost:5000/api/notes/pdf/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            responseType: "blob",
+          },
+        );
 
-            const url = URL.createObjectURL(response.data);
+        const url = URL.createObjectURL(response.data);
 
-            setPdfUrl(url);
-        }
-
+        setPdfUrl(url);
+      }
     } catch (err) {
-        console.log(err);
+      console.log(err);
     }
-};
- const handleShare = async () => {
-  if (!note) {
-    alert("Note is still loading.");
-    return;
-  }
-
-  const shareData = {
-    title: note.title,
-    text: note.content,
   };
+  const handleShare = async () => {
+    if (!note) {
+      toast.error("Note is still loading.");
+      return;
+    }
 
-  try {
-    await navigator.share(shareData);
-  } catch (err) {
-    console.log(err);
-  }
-};
+    const shareData = {
+      title: note.title,
+      text: note.content,
+    };
+
+    try {
+      await navigator.share(shareData);
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   useEffect(() => {
     loadNote();
@@ -110,16 +110,14 @@ const [pdfUrl, setPdfUrl] = useState(null);
     );
   }
 
- return (
-  <div className="page">
-    <Navbar />
+  return (
+    <div className="page">
+      <Navbar />
 
-       
-
-    
       <Sidebar />
 
-      <main  className="
+      <main
+        className="
         lg:ml-56
         
         p-4
@@ -127,8 +125,8 @@ const [pdfUrl, setPdfUrl] = useState(null);
         lg:p-8
         pb-24
         min-h-[calc(100vh-4rem)]
-      ">
-
+      "
+      >
         {/* Back */}
 
         <button
@@ -142,17 +140,13 @@ const [pdfUrl, setPdfUrl] = useState(null);
         {/* Card */}
 
         <div className="bg-white dark:bg-slate-800 rounded-2xl lg:rounded-3xl shadow-xl border border-gray-200 dark:border-slate-700 p-5 sm:p-7 lg:p-10">
-
           {/* Header */}
 
           <div className="flex flex-col xl:flex-row justify-between gap-8">
-
             {/* Left */}
 
             <div className="flex-1">
-
               <div className="border-l-4 border-blue-600 pl-4 sm:pl-5">
-
                 <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-gray-900 dark:text-white capitalize break-words">
                   {note.title}
                 </h1>
@@ -160,43 +154,28 @@ const [pdfUrl, setPdfUrl] = useState(null);
                 <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-2">
                   Study Note
                 </p>
-
               </div>
-
             </div>
 
             {/* Right */}
 
             <div className="flex flex-row gap-3 w-full xl:w-auto">
-
               <span className="px-4 py-3 rounded-xl bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold text-sm sm:text-base text-center">
-
                 🕒 Last Updated
-
                 <br />
-
                 {new Date(
-                  note.updatedAt || note.createdAt
+                  note.updatedAt || note.createdAt,
                 ).toLocaleDateString()}
-
               </span>
 
               {note.dueDate && (
-
                 <span className="px-4 py-3 rounded-xl bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 font-semibold text-sm sm:text-base text-center">
-
                   📅 Created
-
                   <br />
-
                   {new Date(note.dueDate).toLocaleDateString()}
-
                 </span>
-
               )}
-
             </div>
-
           </div>
 
           {/* Divider */}
@@ -206,69 +185,62 @@ const [pdfUrl, setPdfUrl] = useState(null);
           {/* Content */}
 
           <h2 className="text-xl sm:text-2xl font-bold mb-5 dark:text-white">
-
             📖 Content
-
           </h2>
 
-        <div className="bg-gray-50 dark:bg-slate-900 rounded-2xl p-4 sm:p-6 lg:p-8 text-gray-700 dark:text-gray-200">
+          <div className="bg-gray-50 dark:bg-slate-900 rounded-2xl p-4 sm:p-6 lg:p-8 text-gray-700 dark:text-gray-200">
+            {note.content && (
+              <p className="whitespace-pre-line leading-8 sm:leading-9 text-sm sm:text-base lg:text-lg break-words">
+                {note.content}
+              </p>
+            )}
 
-    {note.content && (
-        <p className="whitespace-pre-line leading-8 sm:leading-9 text-sm sm:text-base lg:text-lg break-words">
-            {note.content}
-        </p>
-    )}
-
-    {pdfUrl && (
-        <div className={`${note.content ? "mt-6 pt-6 border-t border-gray-200 dark:border-slate-700" : ""}`}>
-
-            <div className="flex items-center justify-between mb-4">
-
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
+            {pdfUrl && (
+              <div
+                className={`${note.content ? "mt-6 pt-6 border-t border-gray-200 dark:border-slate-700" : ""}`}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                     📄 Attached PDF
-                </h3>
+                  </h3>
 
-                <a
+                  <a
                     href={pdfUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
-                >
+                  >
                     Open PDF
-                </a>
+                  </a>
+                </div>
 
-            </div>
-
-            <div className="w-full overflow-hidden rounded-xl border border-gray-200 dark:border-slate-700 bg-white">
-                <iframe
+                <div className="w-full overflow-hidden rounded-xl border border-gray-200 dark:border-slate-700 bg-white">
+                  <iframe
                     src={pdfUrl}
                     title="Attached PDF"
                     className="w-full h-[500px] sm:h-[650px] lg:h-[750px]"
-                />
-            </div>
+                  />
+                </div>
+              </div>
+            )}
 
-        </div>
-    )}
-
-    {!note.content && !pdfUrl && (
-        <p className="text-gray-500 dark:text-gray-400">
-            No content available.
-        </p>
-    )}
-
-</div>
+            {!note.content && !pdfUrl && (
+              <p className="text-gray-500 dark:text-gray-400">
+                No content available.
+              </p>
+            )}
+          </div>
           <div className="mt-10 flex justify-center sm:justify-end">
             <div className="grid grid-cols-3 sm:flex gap-3 sm:gap-4">
-
               {/* Edit */}
 
-             <button
-    onClick={() => navigate(`/note/${note.id}/edit`)}
-    title="Edit Note"
-    className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-lg transition"
->
-    <FaEdit size={20} />
-</button>
+              <button
+                onClick={() => navigate(`/note/${note.id}/edit`)}
+                title="Edit Note"
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-lg transition"
+              >
+                <FaEdit size={20} />
+              </button>
 
               {/* Delete */}
 
@@ -312,41 +284,34 @@ const [pdfUrl, setPdfUrl] = useState(null);
               >
                 <FaFilePdf size={20} />
               </button>
-
             </div>
-
           </div>
-
         </div>
-
       </main>
 
-   
+      <BottomNav />
 
-    <BottomNav />
+      {showModal && (
+        <AddNoteModal
+          editNote={note}
+          subjectId={note.subjectId}
+          refreshNotes={loadNote}
+          closeModal={() => {
+            setShowModal(false);
+            loadNote();
+          }}
+        />
+      )}
 
-    {showModal && (
-      <AddNoteModal
-        editNote={note}
-        subjectId={note.subjectId}
-        refreshNotes={loadNote}
-        closeModal={() => {
-          setShowModal(false);
-          loadNote();
-        }}
-      />
-    )}
-
-    {showAI && (
-      <AIAssistant
-        text={selectedContent}
-         noteId={note.id}
-        closeModal={() => setShowAI(false)}
-      />
-    )}
-
-  </div>
-);
+      {showAI && (
+        <AIAssistant
+          text={selectedContent}
+          noteId={note.id}
+          closeModal={() => setShowAI(false)}
+        />
+      )}
+    </div>
+  );
 }
 
 export default NoteDetails;

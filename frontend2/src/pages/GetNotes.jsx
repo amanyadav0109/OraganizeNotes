@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
+import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import BottomNav from "../components/BottomNav";
@@ -21,11 +21,6 @@ function GetNotes() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [previewVersion, setPreviewVersion] = useState(Date.now());
   const [previewImages, setPreviewImages] = useState({});
-
-  // ==========================================
-  // FETCH NOTE DETAILS
-  // ==========================================
-
   useEffect(() => {
     const fetchNote = async () => {
       try {
@@ -40,7 +35,7 @@ function GetNotes() {
         );
 
         if (!foundNote) {
-          alert("Note not found");
+          toast.error("Note not found");
           navigate("/find-notes");
           return;
         }
@@ -61,7 +56,7 @@ function GetNotes() {
         });
       } catch (error) {
         console.error("FETCH NOTE ERROR:", error.response?.data || error);
-        alert("Failed to load note");
+        toast.error("Failed to load note");
       } finally {
         setLoading(false);
       }
@@ -69,11 +64,6 @@ function GetNotes() {
 
     fetchNote();
   }, [id, navigate]);
-
-  // ==========================================
-  // LOAD FIRST PDF PAGE + PAGE COUNT
-  // ==========================================
-
   useEffect(() => {
     const loadPdfPreview = async () => {
       if (!note?.isPdf) return;

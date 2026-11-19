@@ -279,17 +279,7 @@ function AdminTopbar({ onMenuClick }) {
 
               <div className="p-2">
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowProfile(false);
-                    navigate("/admin/settings");
-                  }}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-                >
-                  <User size={17} />
-                  Account Settings
-                </button>
+              
 
                 <button
                   type="button"

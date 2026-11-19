@@ -4,7 +4,7 @@ import BottomNav from "../components/BottomNav";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import Avatar from "../components/Avatar";
-
+import { toast } from "react-toastify";
 function Profile() {
   const { user } = useAuth();
 
@@ -24,7 +24,7 @@ function Profile() {
     } else {
       await navigator.clipboard.writeText(url);
 
-      alert("Profile link copied!");
+      toast.success("Profile link copied!");
     }
   };
 
@@ -55,16 +55,12 @@ function Profile() {
                 ✏️ Edit Display Name
               </button>
 
-            
-
               <button
                 onClick={handleShare}
                 className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold"
               >
                 📤 Share Profile
               </button>
-
-              
             </div>
           </div>
           <BottomNav />

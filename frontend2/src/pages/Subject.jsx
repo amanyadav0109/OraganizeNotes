@@ -17,7 +17,6 @@ function Subjects() {
 
   const [showModal, setShowModal] = useState(false);
 
- 
   const loadSubjects = async () => {
     try {
       const data = await getSubjects();
@@ -28,33 +27,29 @@ function Subjects() {
     }
   };
   const handleDelete = async (id) => {
-  const ok = window.confirm(
-    "Are you sure you want to delete this subject?"
-  );
+    const ok = window.confirm("Are you sure you want to delete this subject?");
 
-  if (!ok) return;
+    if (!ok) return;
 
-  try {
-    await deleteSubject(id);
-    loadSubjects();
-  } catch (err) {
-    console.log(err);
-  }
-};
- useEffect(() => {
+    try {
+      await deleteSubject(id);
+      loadSubjects();
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  useEffect(() => {
     loadSubjects();
   }, []);
 
+  return (
+    <div className="page  bg-gray-50 dark:bg-slate-950">
+      <Navbar />
 
- return (
-  <div className="page  bg-gray-50 dark:bg-slate-950">
- <Navbar />
-
-    
       <Sidebar />
 
-  <main
-  className="
+      <main
+        className="
     ml-0
     lg:ml-[215px]
 
@@ -74,12 +69,11 @@ function Subjects() {
     transition-all
     duration-200
   "
->
+      >
+        {/* ================= HEADER ================= */}
 
-  {/* ================= HEADER ================= */}
-
-  <div
-    className="
+        <div
+          className="
       bg-white
             dark:bg-slate-900
             border
@@ -101,16 +95,13 @@ function Subjects() {
             dark:shadow-none
             transition-colors
     "
-  >
+        >
+          {/* LEFT SIDE */}
 
-    {/* LEFT SIDE */}
-
-    <div className="flex items-center gap-3 min-w-0">
-
-      <div className="min-w-0">
-
-        <h1
-          className="
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="min-w-0">
+              <h1
+                className="
             text-xl
             sm:text-2xl
             md:text-3xl
@@ -118,30 +109,29 @@ function Subjects() {
             text-gray-900
             dark:text-white
           "
-        >
-          📚 Subjects
-        </h1>
+              >
+                📚 Subjects
+              </h1>
 
-        <p className="
+              <p
+                className="
           text-xs
           sm:text-sm
           text-gray-500
           dark:text-gray-400
           mt-1
-        ">
-          Manage your subjects
-        </p>
+        "
+              >
+                Manage your subjects
+              </p>
+            </div>
+          </div>
 
-      </div>
+          {/* ADD SUBJECT */}
 
-    </div>
-
-
-    {/* ADD SUBJECT */}
-
-    <button
-      onClick={() => setShowModal(true)}
-      className="
+          <button
+            onClick={() => setShowModal(true)}
+            className="
         w-full
         sm:w-auto
         min-h-[44px]
@@ -161,19 +151,16 @@ function Subjects() {
         shadow-sm
         shrink-0
       "
-    >
-      + Add Subject
-    </button>
+          >
+            + Add Subject
+          </button>
+        </div>
 
-  </div>
+        {/* ================= EMPTY STATE ================= */}
 
-
-  {/* ================= EMPTY STATE ================= */}
-
-  {subjects.length === 0 ? (
-
-    <div
-      className="
+        {subjects.length === 0 ? (
+          <div
+            className="
         mt-5
         sm:mt-6
         bg-white
@@ -189,36 +176,36 @@ function Subjects() {
         dark:shadow-none
         transition-colors
       "
-    >
-
-      <h2 className="
+          >
+            <h2
+              className="
         text-xl
         sm:text-2xl
         font-bold
         text-gray-900
         dark:text-white
-      ">
-        No Subjects Yet 📚
-      </h2>
+      "
+            >
+              No Subjects Yet 📚
+            </h2>
 
-      <p className="
+            <p
+              className="
         text-sm
         sm:text-base
         text-gray-500
         dark:text-gray-400
         mt-3
-      ">
-        Create your first subject.
-      </p>
+      "
+            >
+              Create your first subject.
+            </p>
+          </div>
+        ) : (
+          /* ================= SUBJECT GRID ================= */
 
-    </div>
-
-  ) : (
-
-    /* ================= SUBJECT GRID ================= */
-
-    <div
-      className="
+          <div
+            className="
         mt-5
         sm:mt-6
         grid
@@ -229,72 +216,50 @@ function Subjects() {
         sm:gap-5
         lg:gap-6
       "
-    >
+          >
+            {subjects.map((subject) => (
+              <SubjectCard
+                key={subject.id}
+                subject={subject}
+                onClick={() => navigate(`/subject/${subject.id}`)}
+                onEdit={(subject) => {
+                  setSelectedSubject(subject);
+                  setShowEditModal(true);
+                }}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+        )}
 
-      {subjects.map((subject) => (
+        {/* ================= BOTTOM NAV ================= */}
 
-        <SubjectCard
+        <BottomNav />
+      </main>
 
-          key={subject.id}
+      {/* Add Subject */}
 
-          subject={subject}
-
-          onClick={() =>
-            navigate(`/subject/${subject.id}`)
-          }
-
-          onEdit={(subject) => {
-            setSelectedSubject(subject);
-            setShowEditModal(true);
-          }}
-
-          onDelete={handleDelete}
-
+      {showModal && (
+        <AddSubjectModal
+          closeModal={() => setShowModal(false)}
+          refreshSubjects={loadSubjects}
         />
+      )}
 
-      ))}
+      {/* Edit Subject */}
 
+      {showEditModal && (
+        <AddSubjectModal
+          editSubject={selectedSubject}
+          closeModal={() => {
+            setShowEditModal(false);
+            setSelectedSubject(null);
+          }}
+          refreshSubjects={loadSubjects}
+        />
+      )}
     </div>
-
-  )}
-
-
-  {/* ================= BOTTOM NAV ================= */}
-
-  <BottomNav />
-
-</main>
-
-   
-
-    {/* Add Subject */}
-
-    {showModal && (
-
-      <AddSubjectModal
-        closeModal={() => setShowModal(false)}
-        refreshSubjects={loadSubjects}
-      />
-
-    )}
-
-    {/* Edit Subject */}
-
-    {showEditModal && (
-
-      <AddSubjectModal
-        editSubject={selectedSubject}
-        closeModal={() => {
-          setShowEditModal(false);
-          setSelectedSubject(null);
-        }}
-        refreshSubjects={loadSubjects}
-      />
-
-    )}
-
-  </div>
-);
+  );
 }
 
 export default Subjects;

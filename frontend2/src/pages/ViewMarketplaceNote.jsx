@@ -1,453 +1,192 @@
-
-import React, {
-    useEffect,
-    useState
-} from "react";
+import React, { useEffect, useState } from "react";
 
 import axios from "axios";
-
-import {
-    useNavigate,
-    useParams
-} from "react-router-dom";
-
-import {
-    FaArrowLeft,
-    FaFilePdf,
-    FaEye
-} from "react-icons/fa";
-
+import { toast } from "react-toastify";
+import { useNavigate, useParams } from "react-router-dom";
+import { FaArrowLeft, FaFilePdf, FaEye } from "react-icons/fa";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import BottomNav from "../components/BottomNav";
-
-
 const ViewMarketplaceNote = () => {
-
-    const { id } = useParams();
-
-    const navigate = useNavigate();
-
-    const token =
-        localStorage.getItem("token");
-
-
-    const [note, setNote] =
-        useState(null);
-
-    const [pages, setPages] =
-        useState([]);
-
-    const [pageCount, setPageCount] =
-        useState(0);
-
-    const [loading, setLoading] =
-        useState(true);
-
-
-    const previewUrl =
-        `http://localhost:5000/api/marketplace/preview/${id}`;
-
-
-    // =====================================================
-    // LOAD NOTE + PDF
-    // =====================================================
-
-    useEffect(() => {
-
-        let mounted = true;
-
-        const loadNote = async () => {
-
-            try {
-
-                if (!token) {
-
-                    alert(
-                        "Please login first"
-                    );
-
-                    navigate("/login");
-
-                    return;
-                }
-
-
-                // ==========================================
-                // GET SELLER'S NOTE
-                // ==========================================
-
-                const response =
-                    await axios.get(
-                        "http://localhost:5000/api/marketplace/my-notes",
-                        {
-                            headers: {
-                                Authorization:
-                                    `Bearer ${token}`
-                            }
-                        }
-                    );
-
-
-                const notes =
-                    response.data.notes ||
-                    response.data;
-
-
-                const foundNote =
-                    notes.find(
-                        (item) =>
-                            Number(item.id) ===
-                            Number(id)
-                    );
-
-
-                if (!foundNote) {
-
-                    alert(
-                        "Note not found"
-                    );
-
-                    navigate(
-                        "/my-uploaded-notes"
-                    );
-
-                    return;
-                }
-
-
-                if (!mounted) return;
-
-
-                setNote(foundNote);
-
-
-                // ==========================================
-                // GET FIRST PAGE
-                // ==========================================
-
-                const firstPage =
-                    await axios.get(
-                        `${previewUrl}?page=0`,
-                        {
-                            headers: {
-                                Authorization:
-                                    `Bearer ${token}`
-                            },
-
-                            responseType:
-                                "blob"
-                        }
-                    );
-
-
-                const totalPages =
-                    Number(
-                        firstPage.headers[
-                            "x-page-count"
-                        ]
-                    );
-
-
-                if (!totalPages) {
-
-                    throw new Error(
-                        "PDF page count not received"
-                    );
-
-                }
-
-
-                if (!mounted) return;
-
-
-                setPageCount(
-                    totalPages
-                );
-
-
-                // ==========================================
-                // LOAD ALL PAGES
-                // ==========================================
-
-                const requests = [];
-
-
-                for (
-                    let page = 1;
-                    page < totalPages;
-                    page++
-                ) {
-
-                    requests.push(
-                        axios.get(
-                            `${previewUrl}?page=${page}`,
-                            {
-                                headers: {
-                                    Authorization:
-                                        `Bearer ${token}`
-                                },
-
-                                responseType:
-                                    "blob"
-                            }
-                        )
-                    );
-
-                }
-
-
-                const otherPages =
-                    await Promise.all(
-                        requests
-                    );
-
-
-                const allResponses = [
-                    firstPage,
-                    ...otherPages
-                ];
-
-
-                const imageUrls =
-                    allResponses.map(
-                        (pageResponse) =>
-                            URL.createObjectURL(
-                                pageResponse.data
-                            )
-                    );
-
-
-                if (!mounted) {
-
-                    imageUrls.forEach(
-                        (url) =>
-                            URL.revokeObjectURL(
-                                url
-                            )
-                    );
-
-                    return;
-                }
-
-
-                setPages(
-                    imageUrls
-                );
-
-
-            } catch (error) {
-
-                console.error(
-                    "VIEW MARKETPLACE NOTE ERROR:",
-                    error
-                );
-
-
-                console.error(
-                    "SERVER RESPONSE:",
-                    error.response?.data
-                );
-
-
-                if (
-                    error.response?.status ===
-                    403
-                ) {
-
-                    alert(
-                        "You are not authorized to view this note."
-                    );
-
-                } else {
-
-                    alert(
-                        error.response?.data?.message ||
-                        "Failed to load note"
-                    );
-
-                }
-
-
-                navigate(
-                    "/my-uploaded-notes"
-                );
-
-
-            } finally {
-
-                if (mounted) {
-
-                    setLoading(
-                        false
-                    );
-
-                }
-
-            }
-
-        };
-
-
-        loadNote();
-
-
-        return () => {
-
-            mounted = false;
-
-        };
-
-    }, [id]);
-
-
-    // =====================================================
-    // CLEANUP OBJECT URLS
-    // =====================================================
-
-    useEffect(() => {
-
-        return () => {
-
-            pages.forEach(
-                (url) => {
-
-                    URL.revokeObjectURL(
-                        url
-                    );
-
-                }
-            );
-
-        };
-
-    }, [pages]);
-
-
-    // =====================================================
-    // LOADING SCREEN
-    // =====================================================
-
-    if (loading) {
-
-        return (
-            <>
-                <Navbar />
-
-                <Sidebar />
-
-
-                <main
-                    className="
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+
+  const [note, setNote] = useState(null);
+  const [pages, setPages] = useState([]);
+  const [pageCount, setPageCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const previewUrl = `http://localhost:5000/api/marketplace/preview/${id}`;
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadNote = async () => {
+      try {
+        if (!token) {
+          toast.error("Please login first");
+          navigate("/login");
+
+          return;
+        }
+        const response = await axios.get(
+          "http://localhost:5000/api/marketplace/my-notes",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+        const notes = response.data.notes || response.data;
+        const foundNote = notes.find((item) => Number(item.id) === Number(id));
+        if (!foundNote) {
+          toast.error("Note not found");
+          navigate("/my-uploaded-notes");
+          return;
+        }
+        if (!mounted) return;
+        setNote(foundNote);
+        const firstPage = await axios.get(`${previewUrl}?page=0`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          responseType: "blob",
+        });
+        const totalPages = Number(firstPage.headers["x-page-count"]);
+        if (!totalPages) {
+          throw new Error("PDF page count not received");
+        }
+        if (!mounted) return;
+        setPageCount(totalPages);
+        const requests = [];
+        for (let page = 1; page < totalPages; page++) {
+          requests.push(
+            axios.get(`${previewUrl}?page=${page}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+
+              responseType: "blob",
+            }),
+          );
+        }
+        const otherPages = await Promise.all(requests);
+        const allResponses = [firstPage, ...otherPages];
+        const imageUrls = allResponses.map((pageResponse) =>
+          URL.createObjectURL(pageResponse.data),
+        );
+        if (!mounted) {
+          imageUrls.forEach((url) => URL.revokeObjectURL(url));
+          return;
+        }
+        setPages(imageUrls);
+      } catch (error) {
+        console.error("VIEW MARKETPLACE NOTE ERROR:", error);
+        console.error("SERVER RESPONSE:", error.response?.data);
+        if (error.response?.status === 403) {
+          toast.error("You are not authorized to view this note.");
+        } else {
+          toast.error(error.response?.data?.message || "Failed to load note");
+        }
+        navigate("/my-uploaded-notes");
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+    loadNote();
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
+  useEffect(() => {
+    return () => {
+      pages.forEach((url) => {
+        URL.revokeObjectURL(url);
+      });
+    };
+  }, [pages]);
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <Sidebar />
+        <main
+          className="
                         w-full
-
                         ml-0
-
                         md:ml-[215px]
                         lg:ml-[215px]
-
                         pt-[85px]
                         md:pt-[90px]
-
                         px-4
                         sm:px-6
                         lg:px-8
-
                         pb-24
                         md:pb-10
-
                         min-h-screen
-
                         bg-gray-50
                         dark:bg-[#070d1d]
-
                         overflow-x-hidden
                     "
-                >
-
-                    <div
-                        className="
-                            w-full
-
+        >
+          <div
+            className="w-full
                             min-h-[70vh]
-
                             flex
                             items-center
                             justify-center
                         "
-                    >
-
-                        <div
-                            className="
+          >
+            <div
+              className="
                                 flex
                                 flex-col
                                 items-center
-
                                 gap-4
                             "
-                        >
-
-                            <div
-                                className="
+            >
+              <div
+                className="
                                     w-10
                                     h-10
-
                                     rounded-full
-
                                     border-4
                                     border-cyan-500/20
                                     border-t-cyan-500
-
                                     animate-spin
                                 "
-                            />
-
-                            <p
-                                className="
-                                    text-sm
-
+              />
+              <p
+                className="text-sm
                                     text-gray-500
                                     dark:text-gray-400
                                 "
-                            >
-                                Loading your uploaded note...
-                            </p>
+              >
+                Loading your uploaded note...
+              </p>
+            </div>
+          </div>
+        </main>
 
-                        </div>
-
-                    </div>
-
-                </main>
-
-
-                <BottomNav />
-
-            </>
-        );
-    }
-
-
-    // =====================================================
-    // MAIN PAGE
-    // =====================================================
-
-    return (
-         <div
-            className="
+        <BottomNav />
+      </>
+    );
+  }
+  return (
+    <div
+      className="
                 page
                 min-h-screen
                 bg-gray-50
                 dark:bg-slate-950
             "
-        >
-            <Navbar />
-
-            <Sidebar />
-
-
-            <main
-               
-                className="
+    >
+      <Navbar />
+      <Sidebar />
+      <main
+        className="
                     lg:ml-56
                     p-4
                     sm:p-6
@@ -459,41 +198,26 @@ const ViewMarketplaceNote = () => {
 
                         overflow-x-hidden
                 "
-            >
-            
-
-                {/* ================================================= */}
-                {/* CONTENT CONTAINER */}
-                {/* ================================================= */}
-
-                <div
-                    className="
+      >
+        
+        <div
+          className="
                         w-full
                         max-w-[1200px]
 
                         mx-auto
                     "
-                >
+        >
 
-
-                    {/* ================================================= */}
-                    {/* BACK BUTTON */}
-                    {/* ================================================= */}
-
-                    <div
-                        className="
+          <div
+            className="
                             mb-5
                             md:mb-7
                         "
-                    >
-
-                        <button
-                            onClick={() =>
-                                navigate(
-                                    "/my-uploaded-notes"
-                                )
-                            }
-                            className="
+          >
+            <button
+              onClick={() => navigate("/my-uploaded-notes")}
+              className="
                                 inline-flex
                                 items-center
                                 gap-2
@@ -517,29 +241,18 @@ const ViewMarketplaceNote = () => {
 
                                 transition-all
                             "
-                        >
-
-                            <FaArrowLeft
-                                className="
+            >
+              <FaArrowLeft
+                className="
                                     text-xs
                                 "
-                            />
+              />
 
-                            <span>
-                                Back to My Uploaded Notes
-                            </span>
-
-                        </button>
-
-                    </div>
-
-
-                    {/* ================================================= */}
-                    {/* NOTE HEADER */}
-                    {/* ================================================= */}
-
-                    <section
-                        className="
+              <span>Back to My Uploaded Notes</span>
+            </button>
+          </div>
+          <section
+            className="
                             w-full
 
                             bg-white
@@ -561,12 +274,9 @@ const ViewMarketplaceNote = () => {
                             mb-5
                             md:mb-6
                         "
-                    >
-
-                        {/* TOP AREA */}
-
-                        <div
-                            className="
+          >
+            <div
+              className="
                                 flex
                                 flex-col
                                 sm:flex-row
@@ -575,12 +285,9 @@ const ViewMarketplaceNote = () => {
 
                                 gap-4
                             "
-                        >
-
-                            {/* PDF ICON */}
-
-                            <div
-                                className="
+            >
+                           <div
+                className="
                                     shrink-0
 
                                     w-12
@@ -596,31 +303,24 @@ const ViewMarketplaceNote = () => {
                                     items-center
                                     justify-center
                                 "
-                            >
-
-                                <FaFilePdf
-                                    className="
+              >
+                <FaFilePdf
+                  className="
                                         text-red-500
 
                                         text-xl
                                         sm:text-2xl
                                     "
-                                />
-
-                            </div>
-
-
-                            {/* NOTE DETAILS */}
-
-                            <div
-                                className="
+                />
+              </div>
+              <div
+                className="
                                     min-w-0
                                     flex-1
                                 "
-                            >
-
-                                <h1
-                                    className="
+              >
+                <h1
+                  className="
                                         text-xl
                                         sm:text-2xl
                                         md:text-3xl
@@ -634,13 +334,12 @@ const ViewMarketplaceNote = () => {
                                         text-gray-900
                                         dark:text-white
                                     "
-                                >
-                                    {note?.title}
-                                </h1>
+                >
+                  {note?.title}
+                </h1>
 
-
-                                <p
-                                    className="
+                <p
+                  className="
                                         mt-2
 
                                         text-xs
@@ -651,15 +350,14 @@ const ViewMarketplaceNote = () => {
 
                                         break-all
                                     "
-                                >
-                                    {note?.file_name}
-                                </p>
+                >
+                  {note?.file_name}
+                </p>
 
+                {/* TAGS */}
 
-                                {/* TAGS */}
-
-                                <div
-                                    className="
+                <div
+                  className="
                                         flex
                                         flex-wrap
 
@@ -667,10 +365,9 @@ const ViewMarketplaceNote = () => {
 
                                         mt-4
                                     "
-                                >
-
-                                    <span
-                                        className="
+                >
+                  <span
+                    className="
                                             px-3
                                             py-1.5
 
@@ -684,13 +381,12 @@ const ViewMarketplaceNote = () => {
                                             text-xs
                                             font-semibold
                                         "
-                                    >
-                                        {note?.subject}
-                                    </span>
+                  >
+                    {note?.subject}
+                  </span>
 
-
-                                    <span
-                                        className="
+                  <span
+                    className="
                                             px-3
                                             py-1.5
 
@@ -704,13 +400,12 @@ const ViewMarketplaceNote = () => {
                                             text-xs
                                             font-semibold
                                         "
-                                    >
-                                        {note?.unit}
-                                    </span>
+                  >
+                    {note?.unit}
+                  </span>
 
-
-                                    <span
-                                        className="
+                  <span
+                    className="
                                             inline-flex
                                             items-center
                                             gap-1.5
@@ -728,31 +423,23 @@ const ViewMarketplaceNote = () => {
                                             text-xs
                                             font-semibold
                                         "
-                                    >
-
-                                        <FaEye
-                                            className="
+                  >
+                    <FaEye
+                      className="
                                                 text-[10px]
                                             "
-                                        />
+                    />
+                    Your Uploaded Note
+                  </span>
+                </div>
+              </div>
+            </div>
 
-                                        Your Uploaded Note
+            {/* DESCRIPTION */}
 
-                                    </span>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        {/* DESCRIPTION */}
-
-                        {note?.description && (
-
-                            <div
-                                className="
+            {note?.description && (
+              <div
+                className="
                                     mt-5
                                     pt-5
 
@@ -761,10 +448,9 @@ const ViewMarketplaceNote = () => {
                                     border-gray-200
                                     dark:border-[#243451]
                                 "
-                            >
-
-                                <p
-                                    className="
+              >
+                <p
+                  className="
                                         text-sm
 
                                         leading-6
@@ -772,23 +458,14 @@ const ViewMarketplaceNote = () => {
                                         text-gray-600
                                         dark:text-gray-400
                                     "
-                                >
-                                    {note.description}
-                                </p>
-
-                            </div>
-
-                        )}
-
-                    </section>
-
-
-                    {/* ================================================= */}
-                    {/* PDF VIEWER CARD */}
-                    {/* ================================================= */}
-
-                    <section
-                        className="
+                >
+                  {note.description}
+                </p>
+              </div>
+            )}
+          </section>
+          <section
+            className="
                             w-full
 
                             bg-[#e5e7eb]
@@ -805,12 +482,9 @@ const ViewMarketplaceNote = () => {
                             shadow-sm
                             dark:shadow-none
                         "
-                    >
-
-                        {/* VIEWER HEADER */}
-
-                        <div
-                            className="
+          >
+                      <div
+              className="
                                 px-4
                                 sm:px-5
                                 md:px-6
@@ -834,12 +508,10 @@ const ViewMarketplaceNote = () => {
 
                                 gap-2
                             "
-                        >
-
-                            <div>
-
-                                <h2
-                                    className="
+            >
+              <div>
+                <h2
+                  className="
                                         text-sm
                                         sm:text-base
 
@@ -848,12 +520,12 @@ const ViewMarketplaceNote = () => {
                                         text-gray-900
                                         dark:text-white
                                     "
-                                >
-                                    Uploaded PDF
-                                </h2>
+                >
+                  Uploaded PDF
+                </h2>
 
-                                <p
-                                    className="
+                <p
+                  className="
                                         text-xs
 
                                         mt-1
@@ -861,18 +533,13 @@ const ViewMarketplaceNote = () => {
                                         text-gray-500
                                         dark:text-gray-400
                                     "
-                                >
-                                    {pageCount}{" "}
-                                    {pageCount === 1
-                                        ? "page"
-                                        : "pages"}
-                                </p>
+                >
+                  {pageCount} {pageCount === 1 ? "page" : "pages"}
+                </p>
+              </div>
 
-                            </div>
-
-
-                            <div
-                                className="
+              <div
+                className="
                                     self-start
                                     sm:self-auto
 
@@ -889,19 +556,12 @@ const ViewMarketplaceNote = () => {
                                     text-xs
                                     font-semibold
                                 "
-                            >
-                                Full Access
-                            </div>
-
-                        </div>
-
-
-                        {/* ================================================= */}
-                        {/* PDF PAGES */}
-                        {/* ================================================= */}
-
-                        <div
-                            className="
+              >
+                Full Access
+              </div>
+            </div>
+            <div
+              className="
                                 w-full
 
                                 p-2
@@ -911,18 +571,11 @@ const ViewMarketplaceNote = () => {
                                 space-y-4
                                 sm:space-y-5
                             "
-                        >
-
-                            {pages.map(
-                                (
-                                    pageUrl,
-                                    index
-                                ) => (
-
-                                    <div
-                                        key={index}
-
-                                        className="
+            >
+              {pages.map((pageUrl, index) => (
+                <div
+                  key={index}
+                  className="
                                             w-full
 
                                             max-w-[900px]
@@ -939,12 +592,9 @@ const ViewMarketplaceNote = () => {
                                             shadow-md
                                             sm:shadow-lg
                                         "
-                                    >
-
-                                        {/* PAGE NUMBER */}
-
-                                        <div
-                                            className="
+                >
+                                  <div
+                    className="
                                                 flex
                                                 items-center
                                                 justify-between
@@ -962,29 +612,18 @@ const ViewMarketplaceNote = () => {
 
                                                 text-gray-500
                                             "
-                                        >
+                  >
+                    <span>Page {index + 1}</span>
 
-                                            <span>
-                                                Page {index + 1}
-                                            </span>
+                    <span>
+                      {index + 1} / {pageCount}
+                    </span>
+                  </div>
 
-                                            <span>
-                                                {index + 1} / {pageCount}
-                                            </span>
-
-                                        </div>
-
-
-                                        {/* PAGE IMAGE */}
-
-                                        <img
-                                            src={pageUrl}
-
-                                            alt={`Page ${
-                                                index + 1
-                                            }`}
-
-                                            className="
+                  <img
+                    src={pageUrl}
+                    alt={`Page ${index + 1}`}
+                    className="
                                                 block
 
                                                 w-full
@@ -995,40 +634,24 @@ const ViewMarketplaceNote = () => {
 
                                                 select-none
                                             "
+                    draggable="false"
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
 
-                                            draggable="false"
-                                        />
-
-                                    </div>
-
-                                )
-                            )}
-
-                        </div>
-
-                    </section>
-
-
-                    {/* ================================================= */}
-                    {/* BOTTOM BACK BUTTON */}
-                    {/* ================================================= */}
-
-                    <div
-                        className="
+          <div
+            className="
                             flex
                             justify-center
 
                             mt-6
                         "
-                    >
-
-                        <button
-                            onClick={() =>
-                                navigate(
-                                    "/my-uploaded-notes"
-                                )
-                            }
-                            className="
+          >
+            <button
+              onClick={() => navigate("/my-uploaded-notes")}
+              className="
                                 inline-flex
                                 items-center
                                 gap-2
@@ -1053,26 +676,17 @@ const ViewMarketplaceNote = () => {
 
                                 transition-colors
                             "
-                        >
-
-                            <FaArrowLeft />
-
-                            Back to My Uploaded Notes
-
-                        </button>
-
-                    </div>
-
-                </div>
-
-            </main>
-
-
-            <BottomNav />
-
+            >
+              <FaArrowLeft />
+              Back to My Uploaded Notes
+            </button>
+          </div>
         </div>
-    );
-};
+      </main>
 
+      <BottomNav />
+    </div>
+  );
+};
 
 export default ViewMarketplaceNote;

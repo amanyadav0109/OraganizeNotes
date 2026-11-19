@@ -17,7 +17,7 @@ import BottomNav from "../components/BottomNav";
 function SubjectNotes() {
   const { id } = useParams();
   const navigate = useNavigate();
-const [subjectName, setSubjectName] = useState("");
+  const [subjectName, setSubjectName] = useState("");
   const [selectedContent, setSelectedContent] = useState("");
   const [notes, setNotes] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -57,38 +57,29 @@ const [subjectName, setSubjectName] = useState("");
   }, [id]);
   useEffect(() => {
     const loadSubject = async () => {
-        try {
-            const subjects = await getSubjects();
+      try {
+        const subjects = await getSubjects();
 
-            const subject = subjects.find(
-                (item) => Number(item.id) === Number(id)
-            );
+        const subject = subjects.find((item) => Number(item.id) === Number(id));
 
-            if (subject) {
-                setSubjectName(subject.subjectName);
-            }
-        } catch (err) {
-            console.log(err);
+        if (subject) {
+          setSubjectName(subject.subjectName);
         }
+      } catch (err) {
+        console.log(err);
+      }
     };
 
     loadSubject();
     loadNotes();
-}, [id]);
+  }, [id]);
 
   return (
     <div className="page min-h-screen bg-gray-50 dark:bg-[#080d18] transition-colors duration-200">
-
-      {/* ================= NAVBAR ================= */}
-
       <Navbar />
-
       <Sidebar />
-
-      {/* ================= MAIN ================= */}
-
-     <main
-  className="
+      <main
+        className="
     ml-0
     lg:ml-[215px]
 
@@ -108,8 +99,7 @@ const [subjectName, setSubjectName] = useState("");
     transition-all
     duration-200
   "
->
-
+      >
         {/* ================= HEADER ================= */}
 
         <div
@@ -136,11 +126,9 @@ const [subjectName, setSubjectName] = useState("");
             transition-colors
           "
         >
-
           {/* LEFT SIDE */}
 
           <div className="flex items-center gap-3 min-w-0">
-
             <button
               onClick={() => navigate("/subject")}
               className="
@@ -163,10 +151,9 @@ const [subjectName, setSubjectName] = useState("");
               <ArrowLeft size={22} />
             </button>
 
-           <div className="min-w-0">
-
-    <h1
-        className="
+            <div className="min-w-0">
+              <h1
+                className="
             text-xl
             sm:text-2xl
             md:text-3xl
@@ -175,16 +162,14 @@ const [subjectName, setSubjectName] = useState("");
             dark:text-white
             truncate
         "
-    >
-        {subjectName || "Subject Notes"}
-    </h1>
+              >
+                {subjectName || "Subject Notes"}
+              </h1>
 
-    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
-        Manage your notes for this subject
-    </p>
-
-</div>
-
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Manage your notes for this subject
+              </p>
+            </div>
           </div>
 
           {/* ADD NOTE */}
@@ -215,16 +200,12 @@ const [subjectName, setSubjectName] = useState("");
             <Plus size={18} />
             <span>Add Note</span>
           </button>
-
         </div>
-
 
         {/* ================= CONTENT ================= */}
 
         <div className="mt-5 sm:mt-6">
-
           {notes.length === 0 ? (
-
             /* ================= EMPTY STATE ================= */
 
             <div
@@ -244,10 +225,7 @@ const [subjectName, setSubjectName] = useState("");
                 transition-colors
               "
             >
-
-              <div className="text-5xl sm:text-6xl mb-4">
-                📚
-              </div>
+              <div className="text-5xl sm:text-6xl mb-4">📚</div>
 
               <h2
                 className="
@@ -290,11 +268,8 @@ const [subjectName, setSubjectName] = useState("");
               >
                 + Create Note
               </button>
-
             </div>
-
           ) : (
-
             /* ================= NOTES GRID ================= */
 
             <div
@@ -309,9 +284,7 @@ const [subjectName, setSubjectName] = useState("");
                 lg:gap-6
               "
             >
-
               {notes.map((note, index) => (
-
                 <div
                   key={note.id}
                   className="
@@ -334,15 +307,11 @@ const [subjectName, setSubjectName] = useState("");
                     min-h-[210px]
                   "
                 >
-
                   {/* ================= CARD HEADER ================= */}
 
                   <div>
-
                     <div className="flex justify-between items-start gap-3">
-
                       <div className="flex gap-3 min-w-0">
-
                         {/* NUMBER */}
 
                         <h1
@@ -362,7 +331,6 @@ const [subjectName, setSubjectName] = useState("");
                         {/* TITLE */}
 
                         <div className="min-w-0">
-
                           <h2
                             className="
                               text-lg
@@ -379,26 +347,19 @@ const [subjectName, setSubjectName] = useState("");
                           </h2>
 
                           <div className="h-1 bg-blue-500 rounded-full mt-2 w-12"></div>
-
                         </div>
-
                       </div>
 
                       {/* PIN */}
 
                       {note.isPinned === 1 && (
-                        <span className="text-xl sm:text-2xl shrink-0">
-                          📌
-                        </span>
+                        <span className="text-xl sm:text-2xl shrink-0">📌</span>
                       )}
-
                     </div>
-
 
                     {/* DUE DATE */}
 
                     {note.dueDate && (
-
                       <p
                         className="
                           mt-5
@@ -408,28 +369,19 @@ const [subjectName, setSubjectName] = useState("");
                           dark:text-gray-400
                         "
                       >
-                        📅 Due :{" "}
-                        {new Date(note.dueDate).toLocaleDateString()}
+                        📅 Due : {new Date(note.dueDate).toLocaleDateString()}
                       </p>
-
                     )}
-
                   </div>
-
 
                   {/* ================= BUTTONS ================= */}
 
                   <div className="flex gap-2 sm:gap-3 mt-6">
-
                     {/* PIN */}
 
                     <button
                       onClick={() => handlePin(note.id)}
-                      title={
-                        note.isPinned === 1
-                          ? "Unpin note"
-                          : "Pin note"
-                      }
+                      title={note.isPinned === 1 ? "Unpin note" : "Pin note"}
                       className={`
                         flex-1
                         sm:flex-none
@@ -451,7 +403,6 @@ const [subjectName, setSubjectName] = useState("");
                     >
                       {note.isPinned === 1 ? "📌" : "📍"}
                     </button>
-
 
                     {/* EDIT */}
 
@@ -480,7 +431,6 @@ const [subjectName, setSubjectName] = useState("");
                       <FaEdit />
                     </button>
 
-
                     {/* DELETE */}
 
                     <button
@@ -504,30 +454,19 @@ const [subjectName, setSubjectName] = useState("");
                     >
                       <FaTrash />
                     </button>
-
                   </div>
-
                 </div>
-
               ))}
-
             </div>
-
           )}
-
         </div>
-
 
         {/* ================= MOBILE BOTTOM NAV ================= */}
 
         <div className="lg:hidden">
           <BottomNav />
         </div>
-
       </main>
-
-
-      {/* ================= EDIT NOTE MODAL ================= */}
 
       {showModal && (
         <AddNoteModal
@@ -540,7 +479,6 @@ const [subjectName, setSubjectName] = useState("");
           refreshNotes={loadNotes}
         />
       )}
-
     </div>
   );
 }

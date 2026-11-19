@@ -18,9 +18,6 @@ import {
 
 import StatCard from "../components/StatCard";
 
-// =====================================================
-// MONTHLY REVENUE CANDLESTICK CHART
-// =====================================================
 
 function MonthlyRevenueChart({ data = [] }) {
   const chartWidth = 900;
@@ -405,10 +402,6 @@ function Dashboard() {
         )
       : 0;
 
-  // =====================================================
-  // UI
-  // =====================================================
-
   return (
     <div className="min-w-0 space-y-5 sm:space-y-7 lg:space-y-8">
 
@@ -779,7 +772,6 @@ function Dashboard() {
 
                 </div>
 
-                {/* PREMIUM */}
 
                 <div>
 
@@ -838,9 +830,6 @@ function Dashboard() {
                 </div>
 
               </div>
-
-              {/* ADMIN TIP */}
-
               <div className="mt-8 rounded-xl bg-blue-50 p-4">
 
                 <div className="flex items-center gap-2 text-blue-700">
@@ -863,9 +852,6 @@ function Dashboard() {
             </div>
 
           </section>
-
-          {/* RECENT USERS */}
-
           <section className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white">
 
             <div className="border-b border-slate-100 p-4 sm:p-6">
