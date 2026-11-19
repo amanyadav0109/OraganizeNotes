@@ -1,30 +1,23 @@
 
 import db from "../config/db.js";
 
-// Reusable error handler
 const asyncHandler = (fn) => {
   return (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 };
 
-// ==========================================
-// 1. CATEGORY CONTROLLERS
-// ==========================================
 
-// Get all categories
 export const getCategories = asyncHandler(async (req, res) => {
   const [categories] = await db.promise().query(
     "SELECT * FROM mock_categories ORDER BY id DESC"
   );
-
   res.status(200).json({
     success: true,
     categories,
   });
 });
 
-// Add category
 export const createCategory = asyncHandler(async (req, res) => {
   const { name, description } = req.body;
 
@@ -207,11 +200,7 @@ export const deleteSubject = asyncHandler(async (req, res) => {
   });
 });
 
-// ==========================================
-// 3. TOPIC CONTROLLERS
-// ==========================================
 
-// Get topics
 export const getTopics = asyncHandler(async (req, res) => {
   const { subject_id } = req.query;
 
@@ -238,7 +227,7 @@ export const getTopics = asyncHandler(async (req, res) => {
   });
 });
 
-// Add topic
+
 export const createTopic = asyncHandler(async (req, res) => {
   const { subject_id, name } = req.body;
 
@@ -326,7 +315,7 @@ export const updateTopic = asyncHandler(async (req, res) => {
   });
 });
 
-// Delete topic
+
 export const deleteTopic = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
@@ -348,11 +337,7 @@ export const deleteTopic = asyncHandler(async (req, res) => {
   });
 });
 
-// ==========================================
-// 4. TEST SET CONTROLLERS
-// ==========================================
 
-// Get test sets
 export const getTestSets = asyncHandler(async (req, res) => {
   const { topic_id } = req.query;
 
@@ -670,4 +655,174 @@ export const deleteQuestion = asyncHandler(async (req, res) => {
     success: true,
     message: "Question deleted successfully",
   });
+});
+
+
+export const recordMockTestAttempt = asyncHandler(async (req, res) => {
+  const userId = req.userId;
+  const { test_set_id, question_id, session_id } = req.body;
+
+  // Validate input
+  if (
+    !test_set_id ||
+    !question_id ||
+    !session_id ||
+    !/^\d+$/.test(String(test_set_id)) ||
+    !/^\d+$/.test(String(question_id)) ||
+    typeof session_id !== "string" ||
+    !session_id.trim() ||
+    session_id.trim().length > 100
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Valid test set, question and session ID are required",
+    });
+  }
+
+  const connection = await db.promise().getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // Lock user row to prevent simultaneous requests bypassing the limit
+    const [users] = await connection.query(
+      "SELECT id, plan FROM users WHERE id = ? FOR UPDATE",
+      [userId]
+    );
+
+    if (!users.length) {
+      await connection.rollback();
+
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const plan = users[0].plan;
+    const isPremium = plan === "premium";
+
+    // Verify question belongs to the selected test set
+    const [questions] = await connection.query(
+      `SELECT id
+       FROM mock_questions
+       WHERE id = ? AND test_set_id = ?`,
+      [question_id, test_set_id]
+    );
+
+    if (!questions.length) {
+      await connection.rollback();
+
+      return res.status(404).json({
+        success: false,
+        message: "Question not found in this test",
+      });
+    }
+
+    // Check if this question was already attempted in this session
+    const [existingAttempts] = await connection.query(
+      `SELECT id
+       FROM mock_test_question_attempts
+       WHERE user_id = ?
+       AND session_id = ?
+       AND question_id = ?
+       LIMIT 1`,
+      [userId, session_id.trim(), question_id]
+    );
+
+    // Same question in same session should not count twice
+    if (existingAttempts.length > 0) {
+      const [countRows] = await connection.query(
+        `SELECT COUNT(*) AS used
+         FROM mock_test_question_attempts
+         WHERE user_id = ?
+         AND attempted_at >= NOW() - INTERVAL 24 HOUR`,
+        [userId]
+      );
+
+      await connection.commit();
+
+      return res.status(200).json({
+        success: true,
+        alreadyCounted: true,
+        isPremium,
+        used: isPremium ? null : Number(countRows[0].used),
+        remaining: isPremium
+          ? null
+          : Math.max(0, 10 - Number(countRows[0].used)),
+      });
+    }
+
+    // Check free user's rolling 24-hour limit
+    if (!isPremium) {
+      const [countRows] = await connection.query(
+        `SELECT COUNT(*) AS used
+         FROM mock_test_question_attempts
+         WHERE user_id = ?
+         AND attempted_at >= NOW() - INTERVAL 24 HOUR`,
+        [userId]
+      );
+
+      const used = Number(countRows[0].used);
+
+      if (used >= 10) {
+        await connection.rollback();
+
+        return res.status(403).json({
+          success: false,
+          code: "MOCK_TEST_LIMIT_REACHED",
+          message: "You have reached your daily Mock Test attempt limit.",
+          used: 10,
+          remaining: 0,
+          limit: 10,
+        });
+      }
+    }
+
+    // Record the new question attempt
+    await connection.query(
+      `INSERT INTO mock_test_question_attempts
+       (user_id, test_set_id, question_id, session_id)
+       VALUES (?, ?, ?, ?)`,
+      [userId, test_set_id, question_id, session_id.trim()]
+    );
+
+    if (isPremium) {
+      await connection.commit();
+
+      return res.status(200).json({
+        success: true,
+        alreadyCounted: false,
+        isPremium: true,
+        unlimited: true,
+      });
+    }
+
+    // Get updated count
+    const [updatedCount] = await connection.query(
+      `SELECT COUNT(*) AS used
+       FROM mock_test_question_attempts
+       WHERE user_id = ?
+       AND attempted_at >= NOW() - INTERVAL 24 HOUR`,
+      [userId]
+    );
+
+    const used = Number(updatedCount[0].used);
+
+    await connection.commit();
+
+    return res.status(200).json({
+      success: true,
+      alreadyCounted: false,
+      isPremium: false,
+      used,
+      remaining: Math.max(0, 10 - used),
+      limit: 10,
+    });
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 });

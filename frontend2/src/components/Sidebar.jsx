@@ -11,6 +11,7 @@ import {
   FaBrain,
   FaSignOutAlt,
   FaShoppingCart,
+  FaCrown
 } from "react-icons/fa";
 
 import { NavLink, useNavigate } from "react-router-dom";
@@ -177,10 +178,19 @@ function Sidebar() {
               <FaStickyNote />
               My Uploaded Notes
             </NavLink>
+            <NavLink
+  to="/upgrade"
+  className={menuClass}
+  onClick={closeSidebar}
+>
+  <FaCrown />
+  Upgrade to Premium
+</NavLink>
           </div>
 
           {/* Logout */}
           <div className="pt-5 border-t border-gray-200 dark:border-slate-700">
+            
             <button
               onClick={logout}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"

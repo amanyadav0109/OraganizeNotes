@@ -52,7 +52,7 @@ function MockTests() {
 
   // Exam result
   const [examResult, setExamResult] = useState(null);
-
+const [examSessionId, setExamSessionId] = useState("");
   // Loading and errors
   const [loading, setLoading] = useState(false);
   const [questionsLoading, setQuestionsLoading] = useState(false);
@@ -223,15 +223,19 @@ function MockTests() {
     }
   };
 
-  
   const startExam = () => {
-    if (examQuestions.length === 0) {
-      setQuestionsError("No questions available.");
-      return;
-    }
+  if (examQuestions.length === 0) {
+    setQuestionsError("No questions available.");
+    return;
+  }
 
-    setScreen("exam");
-  };
+  const newSessionId =
+    globalThis.crypto?.randomUUID?.() ||
+    `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  setExamSessionId(newSessionId);
+  setScreen("exam");
+};
 
  
   const handleExamSubmit = (result) => {
@@ -750,10 +754,12 @@ function MockTests() {
             />
           ) : examQuestions.length > 0 ? (
             <ExamScreen
-              test={selectedTest}
-              questions={examQuestions}
-              language={selectedLanguage}
-              onSubmit={handleExamSubmit}
+             test={selectedTest}
+  questions={examQuestions}
+  language={selectedLanguage}
+  sessionId={examSessionId}
+  onSubmit={handleExamSubmit}
+  onUpgrade={() => navigate("/upgrade")}
             />
           ) : (
             <EmptyState

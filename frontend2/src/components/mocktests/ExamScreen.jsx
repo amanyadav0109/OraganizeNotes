@@ -1,5 +1,6 @@
 
-import { useEffect, useState } from "react";
+
+import { useEffect, useRef, useState } from "react";
 import {
   Clock,
   ChevronLeft,
@@ -9,7 +10,13 @@ import {
   CheckCircle2,
   Circle,
   AlertCircle,
+  Crown,
+  X,
 } from "lucide-react";
+
+const API_URL = (
+  import.meta.env.VITE_SERVER_URL || "http://localhost:5000"
+).replace(/\/$/, "");
 
 // Convert database questions into ExamScreen format
 const normalizeQuestions = (questions = []) => {
@@ -58,7 +65,9 @@ export default function ExamScreen({
   test,
   questions = [],
   language,
+  sessionId,
   onSubmit,
+  onUpgrade,
 }) {
   const examQuestions = normalizeQuestions(questions);
 
@@ -74,6 +83,24 @@ export default function ExamScreen({
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  // Mock Test attempt limit states
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [limitReached, setLimitReached] = useState(false);
+  const [attemptInfo, setAttemptInfo] = useState({
+    used: 0,
+    remaining: 10,
+    isPremium: false,
+  });
+
+  const [pendingQuestionId, setPendingQuestionId] = useState(null);
+  const [answerError, setAnswerError] = useState("");
+
+  // Store successfully attempted questions for this session
+  const attemptedQuestionIds = useRef(new Set());
+
+  // Prevent duplicate API requests
+  const pendingQuestionIds = useRef(new Set());
+
   const currentQuestion = examQuestions[currentIndex];
   const totalQuestions = examQuestions.length;
 
@@ -81,6 +108,13 @@ export default function ExamScreen({
   const markedCount = marked.length;
   const unansweredCount = totalQuestions - answeredCount;
 
+  // Reset tracking when a new exam session starts
+  useEffect(() => {
+    attemptedQuestionIds.current = new Set();
+    pendingQuestionIds.current = new Set();
+  }, [sessionId]);
+
+  // Timer
   useEffect(() => {
     if (submitted) return;
 
@@ -113,17 +147,112 @@ export default function ExamScreen({
     ).padStart(2, "0")}`;
   };
 
-  const selectAnswer = (optionIndex) => {
+  // Record an attempt before accepting the first answer
+  const selectAnswer = async (optionIndex) => {
     if (submitted || !currentQuestion) return;
 
-    setAnswers((previous) => ({
-      ...previous,
-      [currentQuestion.id]: optionIndex,
-    }));
+    const questionId = currentQuestion.id;
+
+    // If this question was already attempted in this session,
+    // changing the option will NOT consume another attempt.
+    if (attemptedQuestionIds.current.has(questionId)) {
+      setAnswers((previous) => ({
+        ...previous,
+        [questionId]: optionIndex,
+      }));
+
+      setAnswerError("");
+      return;
+    }
+
+    // Prevent duplicate clicks while API request is running
+    if (pendingQuestionIds.current.has(questionId)) return;
+
+    if (!sessionId || !test?.id) {
+      setAnswerError("Exam session is invalid. Please restart the test.");
+      return;
+    }
+
+    pendingQuestionIds.current.add(questionId);
+    setPendingQuestionId(questionId);
+    setAnswerError("");
+
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("Please login again to continue.");
+      }
+
+      const response = await fetch(
+        `${API_URL}/api/mock-tests/attempts`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            test_set_id: test.id,
+            question_id: questionId,
+            session_id: sessionId,
+          }),
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      // Free user has already used 10 attempts
+      if (
+        response.status === 403 &&
+        data.code === "MOCK_TEST_LIMIT_REACHED"
+      ) {
+        setLimitReached(true);
+
+        setAttemptInfo({
+          used: data.used ?? 10,
+          remaining: data.remaining ?? 0,
+          isPremium: false,
+        });
+
+        setShowLimitModal(true);
+        return;
+      }
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || "Unable to record your answer."
+        );
+      }
+
+      // Mark question as attempted for this session
+      attemptedQuestionIds.current.add(questionId);
+
+      setAttemptInfo({
+        used: data.used ?? attemptInfo.used,
+        remaining: data.remaining ?? attemptInfo.remaining,
+        isPremium: Boolean(data.isPremium),
+      });
+
+      // Accept answer only after backend confirms the attempt
+      setAnswers((previous) => ({
+        ...previous,
+        [questionId]: optionIndex,
+      }));
+    } catch (error) {
+      console.error("MOCK TEST ATTEMPT ERROR:", error);
+
+      setAnswerError(
+        error.message || "Something went wrong. Please try again."
+      );
+    } finally {
+      pendingQuestionIds.current.delete(questionId);
+      setPendingQuestionId(null);
+    }
   };
 
   const toggleMark = () => {
-    if (!currentQuestion) return;
+    if (!currentQuestion || submitted) return;
 
     setMarked((previous) =>
       previous.includes(currentQuestion.id)
@@ -137,6 +266,7 @@ export default function ExamScreen({
 
     setSubmitted(true);
     setShowSubmitModal(false);
+    setShowLimitModal(false);
 
     let correct = 0;
     let incorrect = 0;
@@ -163,6 +293,7 @@ export default function ExamScreen({
         if (answers[question.id] === question.answer) {
           return sum + question.marks;
         }
+
         return sum;
       },
       0
@@ -190,6 +321,7 @@ export default function ExamScreen({
   const goToQuestion = (index) => {
     if (index >= 0 && index < totalQuestions) {
       setCurrentIndex(index);
+      setAnswerError("");
     }
   };
 
@@ -201,9 +333,11 @@ export default function ExamScreen({
           size={40}
           className="mx-auto text-orange-500"
         />
+
         <h3 className="mt-4 text-xl font-bold text-gray-900 dark:text-white">
           No Questions Available
         </h3>
+
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
           No questions have been added to this test yet.
         </p>
@@ -246,6 +380,53 @@ export default function ExamScreen({
         </div>
       </div>
 
+      {/* Attempt Usage */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+        <div>
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+            Mock Test Attempts
+          </p>
+
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {attemptInfo.isPremium
+              ? "Premium: Unlimited attempts"
+              : `${attemptInfo.used}/10 attempts used in the last 24 hours`}
+          </p>
+        </div>
+
+        {attemptInfo.isPremium ? (
+          <span className="flex items-center gap-1 rounded-lg bg-purple-100 px-3 py-2 text-sm font-semibold text-purple-700">
+            <Crown size={16} />
+            Premium
+          </span>
+        ) : (
+          <span
+            className={`rounded-lg px-3 py-2 text-sm font-semibold ${
+              attemptInfo.remaining === 0
+                ? "bg-red-100 text-red-600"
+                : "bg-blue-100 text-blue-700"
+            }`}
+          >
+            {attemptInfo.remaining} remaining
+          </span>
+        )}
+      </div>
+
+      {limitReached && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-orange-300 bg-orange-50 p-4 dark:border-orange-900 dark:bg-orange-950/30">
+          <p className="text-sm font-medium text-orange-800 dark:text-orange-300">
+            You have reached your 10 Mock Test attempts. You can still review and submit your current test.
+          </p>
+
+          <button
+            onClick={onUpgrade}
+            className="shrink-0 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700"
+          >
+            Upgrade
+          </button>
+        </div>
+      )}
+
       <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
 
         {/* Question Section */}
@@ -280,11 +461,15 @@ export default function ExamScreen({
               const selected =
                 answers[currentQuestion.id] === index;
 
+              const isPending =
+                pendingQuestionId === currentQuestion.id;
+
               return (
                 <button
                   key={index}
                   onClick={() => selectAnswer(index)}
-                  className={`flex w-full items-center gap-3 rounded-xl border p-4 text-left transition ${
+                  disabled={submitted || isPending}
+                  className={`flex w-full items-center gap-3 rounded-xl border p-4 text-left transition disabled:cursor-wait ${
                     selected
                       ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"
                       : "border-gray-200 text-gray-700 hover:border-blue-300 dark:border-slate-700 dark:text-gray-200"
@@ -302,10 +487,22 @@ export default function ExamScreen({
                       size={20}
                     />
                   )}
+
+                  {isPending && !selected && index === 0 && (
+                    <span className="ml-auto text-xs text-blue-600">
+                      Saving...
+                    </span>
+                  )}
                 </button>
               );
             })}
           </div>
+
+          {answerError && (
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
+              {answerError}
+            </div>
+          )}
 
           {/* Navigation */}
           <div className="mt-10 flex flex-wrap justify-between gap-3 border-t border-gray-200 pt-5 dark:border-slate-700">
@@ -406,6 +603,60 @@ export default function ExamScreen({
           </button>
         </aside>
       </div>
+
+      {/* Attempt Limit Modal */}
+      {showLimitModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 p-4">
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
+
+            <button
+              onClick={() => setShowLimitModal(false)}
+              className="absolute right-4 top-4 rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 text-orange-600">
+              <AlertCircle size={34} />
+            </div>
+
+            <h3 className="mt-5 text-center text-xl font-bold text-gray-900 dark:text-white">
+              Daily Attempt Limit Reached
+            </h3>
+
+            <p className="mt-3 text-center text-sm leading-6 text-gray-600 dark:text-gray-300">
+              You have used all 10 free Mock Test question attempts in the last 24 hours.
+              Upgrade to Premium to get unlimited attempts.
+            </p>
+
+            <div className="mt-5 rounded-xl bg-gray-100 p-4 text-center dark:bg-slate-800">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Your usage
+              </p>
+
+              <p className="mt-1 text-2xl font-bold text-orange-600">
+                {attemptInfo.used}/10
+              </p>
+            </div>
+
+            <button
+              onClick={onUpgrade}
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-5 py-3 font-semibold text-white hover:bg-purple-700"
+            >
+              <Crown size={18} />
+              Upgrade to Premium
+            </button>
+
+            <button
+              onClick={() => setShowLimitModal(false)}
+              className="mt-3 w-full rounded-xl border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700 dark:border-slate-600 dark:text-gray-200"
+            >
+              Continue Current Test
+            </button>
+
+          </div>
+        </div>
+      )}
 
       {/* Submit Confirmation */}
       {showSubmitModal && (

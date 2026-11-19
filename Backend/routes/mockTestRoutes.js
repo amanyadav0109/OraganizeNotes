@@ -1,4 +1,4 @@
-
+import { isAuth } from "../middleware/authMiddleware.js";
 import express from "express";
 
 import {
@@ -21,7 +21,7 @@ import {
   getQuestions,
   createQuestion,
   updateQuestion,
-  deleteQuestion,
+  deleteQuestion,recordMockTestAttempt 
 } from "../controllers/mockTestController.js";
 
 const router = express.Router();
@@ -55,5 +55,6 @@ router.get("/questions", getQuestions);
 router.post("/questions", createQuestion);
 router.put("/questions/:id", updateQuestion);
 router.delete("/questions/:id", deleteQuestion);
-
+// Mock Test Attempts (Student)
+router.post("/attempts", isAuth, recordMockTestAttempt);
 export default router;

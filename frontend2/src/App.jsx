@@ -28,7 +28,7 @@ import Practice from "./pages/Practice";
 import MockTests from "./pages/MockTests";
 import Analytics from "./pages/Analytics";
 import RevisionPlan from "./pages/RevisionPlan";
-
+import Upgrade from "./pages/Upgrade";
 
 function App() {
   return (
@@ -39,7 +39,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/subject" element={<Subject />} />
         <Route path="/register" element={<Register />} />
-
+<Route path="/upgrade" element={<Upgrade />} />
         <Route
           path="/note/:id"
           element={
