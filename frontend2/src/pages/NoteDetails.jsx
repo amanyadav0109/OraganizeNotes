@@ -1,17 +1,19 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+
 import AIAssistant from "../components/AIAssistant";
-import { generateAI } from "../services/aiService";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
-import AddNoteModal from "../components/AddNoteModal";
+import BottomNav from "../components/BottomNav";
+
 import { exportNotePDF } from "../utils/pdfExport";
 import { getSingleNote, deleteNote } from "../services/noteService";
-import { Share2 } from "lucide-react";
-import BottomNav from "../components/BottomNav";
+import api from "../services/api";
+
 import { toast } from "react-toastify";
-import axios from "axios";
+
 import {
   FaEdit,
   FaTrash,
@@ -19,44 +21,71 @@ import {
   FaFilePdf,
   FaShareAlt,
 } from "react-icons/fa";
+
 function NoteDetails() {
   const { id } = useParams();
-
   const navigate = useNavigate();
+
   const [pdfUrl, setPdfUrl] = useState(null);
   const [note, setNote] = useState(null);
-
-  const [showModal, setShowModal] = useState(false);
   const [showAI, setShowAI] = useState(false);
-
   const [selectedContent, setSelectedContent] = useState("");
+  const [loading, setLoading] = useState(true);
+
   const loadNote = async () => {
     try {
-      const data = await getSingleNote(id);
+      setLoading(true);
 
+      const data = await getSingleNote(id);
       setNote(data);
 
       if (data.filePath) {
-        const token = localStorage.getItem("token");
-
-        const response = await axios.get(
-          `http://localhost:5000/api/notes/pdf/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            responseType: "blob",
-          },
-        );
+        const response = await api.get(`/notes/pdf/${id}`, {
+          responseType: "blob",
+        });
 
         const url = URL.createObjectURL(response.data);
 
-        setPdfUrl(url);
+        setPdfUrl((previousUrl) => {
+          if (previousUrl) {
+            URL.revokeObjectURL(previousUrl);
+          }
+
+          return url;
+        });
+      } else {
+        setPdfUrl((previousUrl) => {
+          if (previousUrl) {
+            URL.revokeObjectURL(previousUrl);
+          }
+
+          return null;
+        });
       }
     } catch (err) {
-      console.log(err);
+      console.error("LOAD NOTE ERROR:", err);
+      toast.error(
+        err.response?.data?.message || "Failed to load note."
+      );
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadNote();
+
+    return () => {
+      setPdfUrl((previousUrl) => {
+        if (previousUrl) {
+          URL.revokeObjectURL(previousUrl);
+        }
+
+        return null;
+      });
+    };
+  }, [id]);
+
   const handleShare = async () => {
     if (!note) {
       toast.error("Note is still loading.");
@@ -65,20 +94,26 @@ function NoteDetails() {
 
     const shareData = {
       title: note.title,
-      text: note.content,
+      text: note.content || "Check out my study note!",
     };
 
     try {
-      await navigator.share(shareData);
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(
+          `${note.title}\n\n${note.content || ""}`
+        );
+
+        toast.success("Note content copied!");
+      }
     } catch (err) {
-      console.log(err);
+      if (err.name !== "AbortError") {
+        console.error("SHARE NOTE ERROR:", err);
+        toast.error("Unable to share note.");
+      }
     }
   };
-
-  useEffect(() => {
-    loadNote();
-    handleShare();
-  }, [id]);
 
   const handleDelete = async () => {
     const confirmDelete = window.confirm("Delete this note?");
@@ -88,47 +123,75 @@ function NoteDetails() {
     try {
       await deleteNote(id);
 
+      toast.success("Note deleted successfully!");
       navigate("/notes");
     } catch (err) {
-      console.log(err);
+      console.error("DELETE NOTE ERROR:", err);
+
+      toast.error(
+        err.response?.data?.message || "Failed to delete note."
+      );
     }
   };
 
-  if (!note) {
+  if (loading) {
     return (
-      <div className="page">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
         <Navbar />
 
         <div className="flex">
           <Sidebar />
 
-          <main className="flex-1 flex justify-center items-center">
-            <h2 className="text-2xl font-bold dark:text-white">Loading...</h2>
+          <main className="flex-1 lg:ml-56 flex justify-center items-center min-h-[80vh]">
+            <h2 className="text-2xl font-bold dark:text-white">
+              Loading...
+            </h2>
           </main>
         </div>
+
+        <BottomNav />
+      </div>
+    );
+  }
+
+  if (!note) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+        <Navbar />
+        <Sidebar />
+
+        <main className="lg:ml-56 p-6 flex flex-col items-center justify-center min-h-[70vh]">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+            Note not found.
+          </h2>
+
+          <button
+            onClick={() => navigate("/notes")}
+            className="mt-4 px-5 py-2 rounded-lg bg-blue-600 text-white"
+          >
+            Back to Notes
+          </button>
+        </main>
+
+        <BottomNav />
       </div>
     );
   }
 
   return (
-    <div className="page">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors">
       <Navbar />
-
       <Sidebar />
 
       <main
         className="
-        lg:ml-56
-        
-        p-4
-        sm:p-6
-        lg:p-8
-        pb-24
-        min-h-[calc(100vh-4rem)]
-      "
+          ml-0 lg:ml-56
+          p-4 sm:p-6 lg:p-8
+          pb-24
+          min-h-[calc(100vh-4rem)]
+          min-w-0
+        "
       >
-        {/* Back */}
-
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:underline mb-5 lg:mb-8"
@@ -137,15 +200,9 @@ function NoteDetails() {
           Back
         </button>
 
-        {/* Card */}
-
         <div className="bg-white dark:bg-slate-800 rounded-2xl lg:rounded-3xl shadow-xl border border-gray-200 dark:border-slate-700 p-5 sm:p-7 lg:p-10">
-          {/* Header */}
-
           <div className="flex flex-col xl:flex-row justify-between gap-8">
-            {/* Left */}
-
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <div className="border-l-4 border-blue-600 pl-4 sm:pl-5">
                 <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-gray-900 dark:text-white capitalize break-words">
                   {note.title}
@@ -157,20 +214,18 @@ function NoteDetails() {
               </div>
             </div>
 
-            {/* Right */}
-
-            <div className="flex flex-row gap-3 w-full xl:w-auto">
+            <div className="flex flex-row flex-wrap gap-3 w-full xl:w-auto">
               <span className="px-4 py-3 rounded-xl bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold text-sm sm:text-base text-center">
                 🕒 Last Updated
                 <br />
                 {new Date(
-                  note.updatedAt || note.createdAt,
+                  note.updatedAt || note.createdAt
                 ).toLocaleDateString()}
               </span>
 
               {note.dueDate && (
                 <span className="px-4 py-3 rounded-xl bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 font-semibold text-sm sm:text-base text-center">
-                  📅 Created
+                  📅 Reminder
                   <br />
                   {new Date(note.dueDate).toLocaleDateString()}
                 </span>
@@ -178,11 +233,7 @@ function NoteDetails() {
             </div>
           </div>
 
-          {/* Divider */}
-
           <hr className="my-6 lg:my-8 border-gray-300 dark:border-slate-700" />
-
-          {/* Content */}
 
           <h2 className="text-xl sm:text-2xl font-bold mb-5 dark:text-white">
             📖 Content
@@ -197,7 +248,11 @@ function NoteDetails() {
 
             {pdfUrl && (
               <div
-                className={`${note.content ? "mt-6 pt-6 border-t border-gray-200 dark:border-slate-700" : ""}`}
+                className={`${
+                  note.content
+                    ? "mt-6 pt-6 border-t border-gray-200 dark:border-slate-700"
+                    : ""
+                }`}
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
@@ -230,10 +285,9 @@ function NoteDetails() {
               </p>
             )}
           </div>
+
           <div className="mt-10 flex justify-center sm:justify-end">
             <div className="grid grid-cols-3 sm:flex gap-3 sm:gap-4">
-              {/* Edit */}
-
               <button
                 onClick={() => navigate(`/note/${note.id}/edit`)}
                 title="Edit Note"
@@ -241,8 +295,6 @@ function NoteDetails() {
               >
                 <FaEdit size={20} />
               </button>
-
-              {/* Delete */}
 
               <button
                 onClick={handleDelete}
@@ -252,8 +304,6 @@ function NoteDetails() {
                 <FaTrash size={20} />
               </button>
 
-              {/* Share */}
-
               <button
                 onClick={handleShare}
                 title="Share"
@@ -261,8 +311,6 @@ function NoteDetails() {
               >
                 <FaShareAlt size={20} />
               </button>
-
-              {/* AI */}
 
               <button
                 onClick={() => {
@@ -274,8 +322,6 @@ function NoteDetails() {
               >
                 <FaRobot size={20} />
               </button>
-
-              {/* PDF */}
 
               <button
                 onClick={() => exportNotePDF(note)}
@@ -290,18 +336,6 @@ function NoteDetails() {
       </main>
 
       <BottomNav />
-
-      {showModal && (
-        <AddNoteModal
-          editNote={note}
-          subjectId={note.subjectId}
-          refreshNotes={loadNote}
-          closeModal={() => {
-            setShowModal(false);
-            loadNote();
-          }}
-        />
-      )}
 
       {showAI && (
         <AIAssistant
