@@ -1,5 +1,7 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import {
   FaRobot,
   FaTimes,
@@ -7,22 +9,21 @@ import {
   FaCopy,
   FaCrown,
 } from "react-icons/fa";
+
 import { generateAI } from "../services/aiService";
+
 import SummaryView from "./SummaryView";
 import InterviewView from "./InterviewView";
 import MCQView from "./MCQView";
-import SubscriptionModal from "./SubscriptionModal";
 
 function AIAssistant({ text, closeModal, noteId }) {
+  const navigate = useNavigate();
+
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [selectedAction, setSelectedAction] = useState("");
   const [error, setError] = useState("");
   const [upgradeRequired, setUpgradeRequired] = useState(false);
-
-  const [showSubscription, setShowSubscription] = useState(false);
-  const [premiumActive, setPremiumActive] = useState(false);
-  const [subscriptionSuccess, setSubscriptionSuccess] = useState(false);
 
   const actions = [
     {
@@ -45,47 +46,54 @@ function AIAssistant({ text, closeModal, noteId }) {
   // AI GENERATION
   const runAI = async (action) => {
     if (
-  (!noteId || !Number.isInteger(Number(noteId))) &&
-  (typeof text !== "string" || !text.trim())
-) {
-  setError("This note is empty. Please add some content first.");
-  return;
-}
+      (!noteId || !Number.isInteger(Number(noteId))) &&
+      (typeof text !== "string" || !text.trim())
+    ) {
+      setError("This note is empty. Please add some content first.");
+      return;
+    }
 
     setLoading(true);
     setSelectedAction(action);
     setResult(null);
     setError("");
     setUpgradeRequired(false);
-    setSubscriptionSuccess(false);
 
     try {
-     const payload = await generateAI(
-  action,
-  text,
-  5,
-  noteId
-);
+      const payload = await generateAI(
+        action,
+        text,
+        5,
+        noteId
+      );
 
       if (!payload || typeof payload !== "object") {
-        throw new Error("Invalid response received from the AI server.");
+        throw new Error(
+          "Invalid response received from the AI server."
+        );
       }
 
       if (payload.success === false) {
         const apiError = new Error(
           payload.message || "AI generation failed."
         );
+
         apiError.upgradeRequired = payload.upgradeRequired;
+
         throw apiError;
       }
 
-      const output = payload.result ?? payload.output ?? payload.data;
+      const output =
+        payload.result ?? payload.output ?? payload.data;
 
       if (
         output == null ||
-        (typeof output !== "object" && typeof output !== "string")
+        (typeof output !== "object" &&
+          typeof output !== "string")
       ) {
-        throw new Error("The AI server returned no generated content.");
+        throw new Error(
+          "The AI server returned no generated content."
+        );
       }
 
       let parsedOutput = output;
@@ -94,7 +102,9 @@ function AIAssistant({ text, closeModal, noteId }) {
         try {
           parsedOutput = JSON.parse(output);
         } catch {
-          throw new Error("The AI response is not valid JSON.");
+          throw new Error(
+            "The AI response is not valid JSON."
+          );
         }
       }
 
@@ -105,8 +115,12 @@ function AIAssistant({ text, closeModal, noteId }) {
       const response = err.response?.data;
       const status = err.response?.status;
 
-      if (response?.upgradeRequired || err.upgradeRequired) {
+      if (
+        response?.upgradeRequired ||
+        err.upgradeRequired
+      ) {
         setUpgradeRequired(true);
+
         setError(
           response?.message ||
             err.message ||
@@ -142,9 +156,12 @@ function AIAssistant({ text, closeModal, noteId }) {
       await navigator.clipboard.writeText(
         JSON.stringify(result, null, 2)
       );
+
       alert("Copied successfully!");
     } catch {
-      setError("Unable to copy. Please copy the response manually.");
+      setError(
+        "Unable to copy. Please copy the response manually."
+      );
     }
   };
 
@@ -156,20 +173,10 @@ function AIAssistant({ text, closeModal, noteId }) {
     setUpgradeRequired(false);
   };
 
-  // OPEN SUBSCRIPTION
+  // GO TO PREMIUM UPGRADE PAGE
   const handleUpgrade = () => {
-    setShowSubscription(true);
-  };
-
-  // CALLED AFTER SUCCESSFUL PAYMENT VERIFICATION
-  const handleSubscriptionSuccess = () => {
-    setPremiumActive(true);
-    setSubscriptionSuccess(true);
-    setUpgradeRequired(false);
-    setError("");
-    setShowSubscription(false);
-    setSelectedAction("");
-    setResult(null);
+    closeModal();
+    navigate("/upgrade");
   };
 
   return (
@@ -187,6 +194,7 @@ function AIAssistant({ text, closeModal, noteId }) {
               <h2 className="text-2xl font-bold text-white">
                 AI Study Assistant
               </h2>
+
               <p className="text-sm text-white/80">
                 Powered by Gemini AI
               </p>
@@ -194,6 +202,7 @@ function AIAssistant({ text, closeModal, noteId }) {
           </div>
 
           <button
+            type="button"
             onClick={closeModal}
             aria-label="Close AI assistant"
             className="text-2xl text-white transition hover:rotate-90"
@@ -204,29 +213,6 @@ function AIAssistant({ text, closeModal, noteId }) {
 
         {/* MAIN CONTENT */}
         <div className="flex-1 overflow-y-auto">
-
-          {/* PAYMENT SUCCESS MESSAGE */}
-          {subscriptionSuccess && (
-            <div
-              role="status"
-              className="mx-6 mt-6 rounded-xl border border-green-300 bg-green-100 p-4 dark:border-green-700 dark:bg-green-950"
-            >
-              <p className="font-bold text-green-800 dark:text-green-200">
-                👑 Premium Activated Successfully!
-              </p>
-              <p className="mt-1 text-green-700 dark:text-green-300">
-                  You can now use AI features. Select a feature below to get started.
-              </p>
-            </div>
-          )}
-
-          {/* PREMIUM STATUS */}
-          {premiumActive && (
-            <div className="mx-6 mt-4 flex items-center gap-2 rounded-xl border border-green-300 bg-green-50 p-3 font-semibold text-green-700 dark:border-green-700 dark:bg-green-950 dark:text-green-200">
-              <FaCrown />
-              Premium Active
-            </div>
-          )}
 
           {/* ERROR MESSAGE */}
           {error && (
@@ -250,21 +236,14 @@ function AIAssistant({ text, closeModal, noteId }) {
               </p>
 
               {upgradeRequired && (
-                premiumActive ? (
-                  <div className="mt-4 inline-flex items-center gap-2 rounded-xl bg-green-600 px-5 py-2 font-semibold text-white">
-                    <FaCrown />
-                    Premium Active
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleUpgrade}
-                    className="mt-4 flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2 font-semibold text-white hover:bg-amber-600"
-                  >
-                    <FaCrown />
-                    Upgrade to Premium
-                  </button>
-                )
+                <button
+                  type="button"
+                  onClick={handleUpgrade}
+                  className="mt-4 flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-3 font-semibold text-white shadow-lg transition hover:opacity-90"
+                >
+                  <FaCrown />
+                  Upgrade to Premium
+                </button>
               )}
             </div>
           )}
@@ -279,6 +258,7 @@ function AIAssistant({ text, closeModal, noteId }) {
               <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                 {actions.map((item) => (
                   <button
+                    type="button"
                     key={item.key}
                     onClick={() => runAI(item.key)}
                     disabled={loading}
@@ -287,6 +267,7 @@ function AIAssistant({ text, closeModal, noteId }) {
                     <h3 className="text-xl font-bold dark:text-white">
                       {item.title}
                     </h3>
+
                     <p className="mt-3 text-gray-500 dark:text-gray-400">
                       {item.desc}
                     </p>
@@ -299,6 +280,7 @@ function AIAssistant({ text, closeModal, noteId }) {
             <div className="p-6 lg:p-8">
               <div className="mb-8 flex items-center justify-between">
                 <button
+                  type="button"
                   onClick={resetAssistant}
                   disabled={loading}
                   className="flex items-center gap-2 font-semibold text-blue-600 hover:underline disabled:opacity-50"
@@ -309,6 +291,7 @@ function AIAssistant({ text, closeModal, noteId }) {
 
                 {!loading && result && (
                   <button
+                    type="button"
                     onClick={copy}
                     className="flex items-center gap-2 rounded-xl bg-green-600 px-5 py-2 text-white hover:bg-green-700"
                   >
@@ -321,9 +304,11 @@ function AIAssistant({ text, closeModal, noteId }) {
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-24">
                   <div className="h-16 w-16 animate-spin rounded-full border-4 border-purple-600 border-t-transparent" />
+
                   <h2 className="mt-8 text-2xl font-bold dark:text-white">
                     🤖 AI is Generating...
                   </h2>
+
                   <p className="mt-3 text-center text-gray-500">
                     Generating your response. Please wait.
                   </p>
@@ -333,9 +318,11 @@ function AIAssistant({ text, closeModal, noteId }) {
                   {selectedAction === "summary" && (
                     <SummaryView data={result} />
                   )}
+
                   {selectedAction === "interview" && (
                     <InterviewView data={result} />
                   )}
+
                   {selectedAction === "mcq" && (
                     <MCQView data={result} />
                   )}
@@ -345,14 +332,6 @@ function AIAssistant({ text, closeModal, noteId }) {
           )}
         </div>
       </div>
-
-      {/* SUBSCRIPTION MODAL */}
-      {showSubscription && (
-        <SubscriptionModal
-          closeModal={() => setShowSubscription(false)}
-          onSuccess={handleSubscriptionSuccess}
-        />
-      )}
     </div>
   );
 }
